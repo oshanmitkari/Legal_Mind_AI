@@ -1,0 +1,282 @@
+{
+  "total_sections": 39,
+  "total_chunks": 39,
+  "dimension": 128,
+  "chunks": [
+    {
+      "section_id": 0,
+      "section_title": "INDIAN PENAL CODE (IPC), 1860",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 1,
+      "section_title": "Section 120B IPC - Criminal Conspiracy",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 2,
+      "section_title": "Section 302 IPC - Murder",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 3,
+      "section_title": "Section 304 IPC - Culpable Homicide Not Amounting to Murder",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 4,
+      "section_title": "Section 307 IPC - Attempt to Murder",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 5,
+      "section_title": "Section 376 IPC - Rape",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 6,
+      "section_title": "Section 420 IPC - Cheating and Dishonestly Inducing Delivery of Property",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 7,
+      "section_title": "Section 467 IPC - Forgery of Valuable Security, Will, etc.",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 8,
+      "section_title": "Section 498A IPC - Cruelty by Husband or Relatives",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 9,
+      "section_title": "CODE OF CRIMINAL PROCEDURE (CrPC), 1973",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 10,
+      "section_title": "Section 41 CrPC - When Police May Arrest Without Warrant",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 11,
+      "section_title": "Section 154 CrPC - Information in Cognizable Cases",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 12,
+      "section_title": "Section 156 CrPC - Police Officer's Power to Investigate Cognizable Case",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 13,
+      "section_title": "Section 161 CrPC - Examination of Witnesses by Police",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 14,
+      "section_title": "Section 167 CrPC - Procedure When Investigation Cannot Be Completed in 24 Hours",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 15,
+      "section_title": "Section 437 CrPC - Bail in Non-Bailable Cases (Magistrate)",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 16,
+      "section_title": "Section 438 CrPC - Anticipatory Bail",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 17,
+      "section_title": "Section 439 CrPC - Special Powers of High Court or Court of Session (Bail)",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 18,
+      "section_title": "CODE OF CIVIL PROCEDURE (CPC), 1908",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 19,
+      "section_title": "Order 7 Rule 11 CPC - Rejection of Plaint",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 20,
+      "section_title": "Section 9 CPC - Courts to Try All Civil Suits",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 21,
+      "section_title": "Order 39 Rule 1 and 2 CPC - Temporary Injunctions",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 22,
+      "section_title": "INFORMATION TECHNOLOGY ACT, 2000",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 23,
+      "section_title": "Section 43 IT Act - Penalty for Damage to Computer System",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 24,
+      "section_title": "Section 66 IT Act - Computer Related Offences",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 25,
+      "section_title": "Section 66C IT Act - Identity Theft",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 26,
+      "section_title": "Section 66D IT Act - Cheating by Personation Using Computer Resource",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 27,
+      "section_title": "Section 67 IT Act - Publishing Obscene Information",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 28,
+      "section_title": "INSOLVENCY AND BANKRUPTCY CODE (IBC), 2016",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 29,
+      "section_title": "Section 7 IBC - Initiation of Corporate Insolvency Resolution Process by Financial Creditor",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 30,
+      "section_title": "Section 9 IBC - Application by Operational Creditor",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 31,
+      "section_title": "Section 238 IBC - Provisions of This Code to Override Other Laws",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 32,
+      "section_title": "NEGOTIABLE INSTRUMENTS ACT, 1881",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 33,
+      "section_title": "Section 138 NI Act - Dishonour of Cheque for Insufficiency of Funds",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 34,
+      "section_title": "CONSTITUTION OF INDIA",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 35,
+      "section_title": "Article 21 - Protection of Life and Personal Liberty",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 36,
+      "section_title": "Article 14 - Equality Before Law",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 37,
+      "section_title": "Article 19 - Protection of Six Rights",
+      "chunk_index": 0,
+      "total_chunks": 1
+    },
+    {
+      "section_id": 38,
+      "section_title": "Article 32 - Remedies for Enforcement of Fundamental Rights",
+      "chunk_index": 0,
+      "total_chunks": 1
+    }
+  ],
+  "chunk_texts": [
+    "INDIAN PENAL CODE (IPC), 1860",
+    "Section 120B IPC - Criminal Conspiracy Whoever is a party to a criminal conspiracy to commit an offence punishable with death, imprisonment for life or rigorous imprisonment for a term of two years or upwards, shall be punished in the same manner as if he had abetted such offence. Cognizable, Non-bailable.",
+    "Section 302 IPC - Murder Whoever commits murder shall be punished with death or imprisonment for life, and shall also be liable to fine. Cognizable, Non-bailable, Non-compoundable. Triable by Court of Session.",
+    "Section 304 IPC - Culpable Homicide Not Amounting to Murder Whoever commits culpable homicide not amounting to murder shall be punished with imprisonment for life or imprisonment for a term up to 10 years with fine. Cognizable, Non-bailable, Non-compoundable.",
+    "Section 307 IPC - Attempt to Murder Whoever does any act with intention or knowledge to cause death shall be punished with imprisonment up to 10 years with fine; if hurt is caused, imprisonment for life. Cognizable, Non-bailable, Non-compoundable.",
+    "Section 376 IPC - Rape Whoever commits rape shall be punished with rigorous imprisonment not less than 10 years extendable to life and fine. Cognizable, Non-bailable, Non-compoundable. Triable by Court of Session.",
+    "Section 420 IPC - Cheating and Dishonestly Inducing Delivery of Property Whoever cheats and thereby dishonestly induces the person deceived to deliver any property shall be punished with imprisonment up to 7 years and fine. Cognizable, Non-bailable, Compoundable with permission.",
+    "Section 467 IPC - Forgery of Valuable Security, Will, etc. Whoever forges a document which purports to be a valuable security or will shall be punished with imprisonment for life or up to 10 years with fine. Cognizable, Non-bailable, Non-compoundable.",
+    "Section 498A IPC - Cruelty by Husband or Relatives Whoever subjects a woman to cruelty shall be punished with imprisonment up to 3 years and fine. Cognizable, Non-bailable, Non-compoundable.",
+    "CODE OF CRIMINAL PROCEDURE (CrPC), 1973",
+    "Section 41 CrPC - When Police May Arrest Without Warrant Any police officer may arrest any person who has been concerned in any cognizable offence or against whom reasonable suspicion exists or credible information has been received. Person arrested shall be informed of grounds of arrest.",
+    "Section 154 CrPC - Information in Cognizable Cases Every information relating to commission of a cognizable offence if given orally shall be reduced to writing by the officer in charge of police station and read over to the informant. FIR shall be signed by the informant.",
+    "Section 156 CrPC - Police Officer's Power to Investigate Cognizable Case Any officer in charge of a police station may investigate any cognizable case without order of Magistrate.",
+    "Section 161 CrPC - Examination of Witnesses by Police Any police officer making investigation may examine orally any person supposed to be acquainted with facts and circumstances of the case.",
+    "Section 167 CrPC - Procedure When Investigation Cannot Be Completed in 24 Hours Magistrate may authorize detention of accused for maximum 15 days on first production. Total detention during investigation shall not exceed 60 days for offences punishable up to 10 years, and 90 days for more serious offences.",
+    "Section 437 CrPC - Bail in Non-Bailable Cases (Magistrate) When any person accused of non-bailable offence is arrested, Court may release on bail if there are reasonable grounds for believing accused is not guilty and is not likely to commit any offence while on bail.",
+    "Section 438 CrPC - Anticipatory Bail When any person has reason to believe he may be arrested for non-bailable offence, he may apply to High Court or Court of Session for anticipatory bail.",
+    "Section 439 CrPC - Special Powers of High Court or Court of Session (Bail) High Court or Court of Session may direct that any person accused of offence and in custody be released on bail.",
+    "CODE OF CIVIL PROCEDURE (CPC), 1908",
+    "Order 7 Rule 11 CPC - Rejection of Plaint Plaint shall be rejected where it does not disclose cause of action, where relief claimed is undervalued, where relief claimed is barred by law, or where suit appears barred by limitation.",
+    "Section 9 CPC - Courts to Try All Civil Suits Courts shall have jurisdiction to try all suits of civil nature except suits expressly or impliedly barred.",
+    "Order 39 Rule 1 and 2 CPC - Temporary Injunctions Where property in dispute is in danger of being wasted or alienated, or defendant threatens to remove or dispose of property to defraud creditors, Court may grant temporary injunction.",
+    "INFORMATION TECHNOLOGY ACT, 2000",
+    "Section 43 IT Act - Penalty for Damage to Computer System If any person without permission destroys, deletes, alters any information or diminishes value of computer resource, he shall be liable to pay damages by way of compensation up to Rs. 1 crore.",
+    "Section 66 IT Act - Computer Related Offences Whoever commits hacking shall be punished with imprisonment up to 3 years or fine up to Rs. 5 lakh or both. Cognizable, Bailable.",
+    "Section 66C IT Act - Identity Theft Whoever fraudulently uses the electronic signature, password or unique identification of another person shall be punished with imprisonment up to 3 years and fine up to Rs. 1 lakh. Cognizable, Bailable.",
+    "Section 66D IT Act - Cheating by Personation Using Computer Resource Whoever cheats by personation using computer resource shall be punished with imprisonment up to 3 years and fine up to Rs. 1 lakh. Cognizable, Bailable.",
+    "Section 67 IT Act - Publishing Obscene Information Whoever publishes or transmits obscene material in electronic form shall be punished with imprisonment up to 5 years and fine up to Rs. 10 lakh. Cognizable, Bailable on first conviction, Non-bailable on subsequent conviction.",
+    "INSOLVENCY AND BANKRUPTCY CODE (IBC), 2016",
+    "Section 7 IBC - Initiation of Corporate Insolvency Resolution Process by Financial Creditor Financial creditor may file application for initiating corporate insolvency resolution process when default has occurred.",
+    "Section 9 IBC - Application by Operational Creditor Operational creditor may file application when default has occurred and operational debt is not less than Rs. 1 lakh.",
+    "Section 238 IBC - Provisions of This Code to Override Other Laws Provisions of this Code shall have effect notwithstanding anything inconsistent therewith contained in any other law.",
+    "NEGOTIABLE INSTRUMENTS ACT, 1881",
+    "Section 138 NI Act - Dishonour of Cheque for Insufficiency of Funds Where cheque is returned unpaid due to insufficiency of funds, drawer shall be punished with imprisonment up to 2 years or fine up to twice the amount of cheque or both. Cognizable, Non-bailable, Compoundable.",
+    "CONSTITUTION OF INDIA",
+    "Article 21 - Protection of Life and Personal Liberty No person shall be deprived of his life or personal liberty except according to procedure established by law.",
+    "Article 14 - Equality Before Law State shall not deny any person equality before law or equal protection of laws within territory of India.",
+    "Article 19 - Protection of Six Rights All citizens shall have right to freedom of speech and expression, assembly, association, movement, residence, and profession.",
+    "Article 32 - Remedies for Enforcement of Fundamental Rights Right to move Supreme Court for enforcement of fundamental rights is guaranteed. Supreme Court shall have power to issue writs including habeas corpus, mandamus, prohibition, quo warranto and certiorari."
+  ]
+}

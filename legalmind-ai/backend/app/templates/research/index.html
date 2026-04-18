@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Legal Research - LegalMind AI{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card bg-gradient border-0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="card-body py-4">
+                <h2 class="text-white fw-bold mb-2">
+                    <i class="bi bi-book"></i> Legal Research Engine
+                </h2>
+                <p class="text-white-50 mb-0">
+                    F7: RAG-powered search across Indian legal statutes (IPC, CrPC, CPC, IBC, IT Act)
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search Interface -->
+<div class="row g-4">
+    <!-- Left Column: Search -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-dark">
+                <h5 class="mb-0"><i class="bi bi-search"></i> Search Indian Law</h5>
+            </div>
+            <div class="card-body">
+                <form id="researchForm">
+                    <div class="mb-3">
+                        <label class="form-label">Enter your legal question</label>
+                        <textarea class="form-control" 
+                                  id="researchQuery" 
+                                  rows="4" 
+                                  placeholder="Example: What are the provisions for cyberstalking under Indian law?"
+                                  required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search"></i> Research
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div id="researchResults" class="mt-4" style="display: none;">
+            <div class="card">
+                <div class="card-header bg-dark d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-file-earmark-text"></i> Research Results</h5>
+                    <button class="btn btn-sm btn-outline-light" onclick="exportResults()">
+                        <i class="bi bi-download"></i> Export
+                    </button>
+                </div>
+                <div class="card-body">
+                    <!-- Retrieved Sections -->
+                    <div id="retrievedSections" class="mb-4" style="display: none;">
+                        <h6 class="text-primary mb-3">
+                            <i class="bi bi-database"></i> Retrieved from FAISS Index:
+                        </h6>
+                        <div id="retrievedSectionsList"></div>
+                    </div>
+
+                    <!-- AI Analysis -->
+                    <div id="aiAnalysis"></div>
+
+                    <!-- Cited Sections -->
+                    <div id="citedSections" class="mt-4 pt-4 border-top" style="display: none;">
+                        <h6 class="text-muted mb-3">Cited Sections:</h6>
+                        <div id="citedSectionsList"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Quick Access & Examples -->
+    <div class="col-lg-4">
+        <!-- Quick Access Acts -->
+        <div class="card mb-4">
+            <div class="card-header bg-dark">
+                <h5 class="mb-0"><i class="bi bi-bookmarks"></i> Quick Access</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <button class="list-group-item list-group-item-action bg-dark text-white border-secondary" 
+                            onclick="quickSearch('IPC sections for fraud')">
+                        <i class="bi bi-chevron-right"></i> IPC - Indian Penal Code
+                    </button>
+                    <button class="list-group-item list-group-item-action bg-dark text-white border-secondary" 
+                            onclick="quickSearch('CrPC bail provisions')">
+                        <i class="bi bi-chevron-right"></i> CrPC - Criminal Procedure
+                    </button>
+                    <button class="list-group-item list-group-item-action bg-dark text-white border-secondary" 
+                            onclick="quickSearch('IT Act cybercrime')">
+                        <i class="bi bi-chevron-right"></i> IT Act - Cyber Crimes
+                    </button>
+                    <button class="list-group-item list-group-item-action bg-dark text-white border-secondary" 
+                            onclick="quickSearch('IBC insolvency proceedings')">
+                        <i class="bi bi-chevron-right"></i> IBC - Insolvency Code
+                    </button>
+                    <button class="list-group-item list-group-item-action bg-dark text-white border-secondary" 
+                            onclick="quickSearch('CPC civil suit rejection')">
+                        <i class="bi bi-chevron-right"></i> CPC - Civil Procedure
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Example Queries -->
+        <div class="card">
+            <div class="card-header bg-dark">
+                <h5 class="mb-0"><i class="bi bi-lightbulb"></i> Example Queries</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-secondary btn-sm text-start" 
+                            onclick="quickSearch('What is Section 420 IPC?')">
+                        What is Section 420 IPC?
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm text-start" 
+                            onclick="quickSearch('Provisions for anticipatory bail')">
+                        Provisions for anticipatory bail
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm text-start" 
+                            onclick="quickSearch('Identity theft under IT Act')">
+                        Identity theft under IT Act
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm text-start" 
+                            onclick="quickSearch('Cheque bounce penalties')">
+                        Cheque bounce penalties
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm text-start" 
+                            onclick="quickSearch('Murder vs culpable homicide')">
+                        Murder vs culpable homicide
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 9999;">
+    <div class="d-flex justify-content-center align-items-center h-100">
+        <div class="text-center text-white">
+            <div class="spinner-border mb-3" style="width: 3rem; height: 3rem;" role="status"></div>
+            <h5>Researching legal provisions...</h5>
+            <p class="text-muted">Analyzing Indian statutes with AI</p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/legal_research.js"></script>
+{% endblock %}

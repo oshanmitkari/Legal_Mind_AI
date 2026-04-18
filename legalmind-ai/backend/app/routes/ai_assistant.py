@@ -1,5 +1,5 @@
 """F6, F7, F8, F9: AI Features - Gemini integration for legal assistance"""
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, render_template
 from app.utils.auth_utils import login_required, get_current_user
 from app.models import db, Case, ChatMessage, Document
 from app.services.document_search_service import retrieve_case_document_snippets
@@ -9,6 +9,15 @@ from datetime import datetime
 import os
 
 ai_bp = Blueprint('ai', __name__)
+
+
+@ai_bp.route('/research', methods=['GET'])
+@login_required
+def research_page():
+    """F7: Render legal research UI page"""
+    current_user = get_current_user()
+    return render_template('research/index.html', current_user=current_user)
+
 
 # Initialize Gemini
 def _initialize_gemini():
@@ -102,13 +111,39 @@ Provide a detailed, case-specific legal response based on the case context provi
         } for source in retrieved_sources]
     }), 200
 
+
+@ai_bp.route('/chat/<int:case_id>/history', methods=['GET'])
+@login_required
+def get_chat_history(case_id):
+    """F6: Get chat history for a case - Persistence feature"""
+    current_user = get_current_user()
+    case = Case.query.get_or_404(case_id)
+
+    # Authorization - RLS enforcement
+    if not current_user.is_admin and case.user_id != current_user.id:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    # Retrieve all messages for this case, ordered by time
+    messages = ChatMessage.query.filter_by(case_id=case_id).order_by(ChatMessage.created_at.asc()).all()
+
+    return jsonify({
+        'case_id': case_id,
+        'case_number': case.case_number,
+        'message_count': len(messages),
+        'messages': [{
+            'id': msg.id,
+            'message_type': msg.message_type,  # 'user' or 'assistant'
+            'content': msg.content,
+            'created_at': msg.created_at.isoformat(),
+        } for msg in messages]
+    }), 200
+
 @ai_bp.route('/research', methods=['POST'])
 @login_required
 def legal_research():
-    """F7: Legal Research (RAG) - Query Indian legal codes
+    """F7: Legal Research (RAG) - Query Indian legal codes with FAISS retrieval
 
-    Enhanced version with structured citations and section references.
-    Future enhancement: Add RAG from pre-loaded FAISS index of Indian statutes.
+    Uses pre-loaded FAISS index of Indian statutes (IPC, CrPC, CPC, IBC, IT Act)
     """
     current_user = get_current_user()
     data = request.get_json()
@@ -118,33 +153,54 @@ def legal_research():
         return jsonify({'error': 'Empty query'}), 400
 
     try:
+        # F7: Retrieve relevant sections from law FAISS index
+        from app.utils.law_index_builder import search_law_index
+        import os
+
+        backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        law_index_dir = os.path.join(backend_dir, 'data', 'law_faiss_index')
+
+        # Get top 5 relevant law sections
+        try:
+            relevant_sections = search_law_index(law_index_dir, query, top_k=5)
+            rag_context = "\n\n".join([
+                f"**{section['section_title']}**\n{section['text']}"
+                for section in relevant_sections
+            ])
+        except FileNotFoundError:
+            # Fallback if index not built
+            rag_context = "Law index not available - using general knowledge"
+            relevant_sections = []
+
+        # Build enhanced prompt with RAG context
         _initialize_gemini()
         model = genai.GenerativeModel('gemini-1.5-flash')
-        prompt = f"""You are an expert Indian legal researcher with deep knowledge of IPC, CrPC, CPC, IBC, IT Act, and Constitution of India.
+
+        prompt = f"""You are an expert Indian legal researcher analyzing a query using the provided legal statutes.
 
 Research Query: {query}
 
-Provide comprehensive legal research with:
+Retrieved Relevant Sections from Indian Law:
+{rag_context}
+
+Based on the retrieved sections and your legal knowledge, provide comprehensive research with:
 
 ## 1. PRIMARY APPLICABLE SECTIONS
 List exact section numbers with Act name (e.g., "Section 420 IPC", "Section 138 NI Act")
 
 ## 2. DETAILED PROVISIONS
-Explain each section's scope, requirements, and conditions
+Explain each section's scope, requirements, and conditions from the retrieved text
 
 ## 3. PENALTIES & CONSEQUENCES
 State punishment, bail status (bailable/non-bailable), cognizable status, and compoundability
 
-## 4. LANDMARK JUDGMENTS
-Cite 2-3 important Supreme Court or High Court cases with citation format
+## 4. PRACTICAL IMPLICATIONS
+Procedural steps for lawyers, documentation required, and common pitfalls
 
-## 5. PRACTICAL GUIDANCE
-Procedural steps, documentation required, and common pitfalls
-
-## 6. RELATED SECTIONS
+## 5. RELATED SECTIONS
 Cross-reference connected provisions that may apply
 
-Use professional legal language. Cite section numbers accurately. Format with markdown headings."""
+Use professional legal language. Cite section numbers accurately from retrieved text. Format with markdown headings."""
 
         response = model.generate_content(prompt)
         research_result = response.text
@@ -160,6 +216,12 @@ Use professional legal language. Cite section numbers accurately. Format with ma
         'query': query,
         'research': research_result,
         'cited_sections': list(set(sections)) if sections else [],
+        'retrieved_sections': [
+            {
+                'title': s['section_title'],
+                'relevance': s['relevance_score']
+            } for s in relevant_sections
+        ] if relevant_sections else [],
         'timestamp': datetime.utcnow().isoformat()
     }), 200
 
@@ -300,20 +362,34 @@ def chat_history(case_id):
 
 # Helper functions
 def _get_case_context(case):
-    """Build full case context for AI"""
+    """Build full case context for AI - F6: Enhanced with deadlines"""
+    from app.models import Deadline
+
+    # Get documents
     documents = Document.query.filter_by(case_id=case.id).all()
-    doc_text = "\n".join([f"[{d.document_type}]\n{d.text_content[:500]}..." 
+    doc_text = "\n".join([f"[{d.document_type}]\n{d.text_content[:500]}..."
                           for d in documents[:3]])  # Limit to first 3
-    
+
+    # Get upcoming deadlines
+    deadlines = Deadline.query.filter_by(case_id=case.id, is_completed=False).order_by(Deadline.due_date.asc()).limit(5).all()
+    deadline_text = "\n".join([
+        f"- {d.title} (Due: {d.due_date.strftime('%Y-%m-%d %H:%M')}, Priority: {d.priority}, Type: {d.deadline_type})"
+        for d in deadlines
+    ]) if deadlines else "No upcoming deadlines"
+
     context = f"""
 Case Number: {case.case_number}
 Client Name: {case.client_name}
 Case Type: {case.case_type}
 Status: {case.status}
 Description: {case.description}
+Risk Score: {case.risk_score}/100
 
-Documents:
-{doc_text}
+Upcoming Deadlines:
+{deadline_text}
+
+Documents Uploaded:
+{doc_text if doc_text else "No documents uploaded yet"}
 """
     return context
 
