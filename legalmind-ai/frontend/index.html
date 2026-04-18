@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LegalMind AI - Premium Legal Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #0B0F19 0%, #111827 100%); }
+        .glass { backdrop-filter: blur(10px); background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .animate-pulse-slow { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        .sidebar-transition { transition: width 0.3s ease; }
+        .card-hover { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); }
+        .typing { animation: typing 1.5s infinite; }
+        @keyframes typing { 0%, 60%, 100% { opacity: 1; } 30% { opacity: 0; } }
+    </style>
+</head>
+<body class="gradient-bg text-gray-200 min-h-screen" x-data="{ sidebarOpen: true, darkMode: true, notifications: 3, searchQuery: '', chatMessages: [], isTyping: false }">
+    
+    <!-- Sidebar -->
+    <div class="fixed left-0 top-0 h-full bg-gray-900 border-r border-gray-700 sidebar-transition" 
+         :class="{ 'w-64': sidebarOpen, 'w-16': !sidebarOpen }">
+        <div class="flex items-center justify-between p-4 border-b border-gray-700">
+            <div class="flex items-center space-x-3" x-show="sidebarOpen">
+                <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <span class="text-white font-bold text-sm">LM</span>
+                </div>
+                <span class="text-xl font-bold text-white">LegalMind AI</span>
+            </div>
+            <button @click="sidebarOpen = !sidebarOpen" class="text-gray-400 hover:text-white transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <nav class="mt-8 px-4">
+            <div class="space-y-2">
+                <a href="#" class="flex items-center space-x-3 px-3 py-3 rounded-lg bg-blue-600 text-white transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z"></path>
+                    </svg>
+                    <span x-show="sidebarOpen" class="font-medium">Dashboard</span>
+                </a>
+                
+                <a href="#" class="flex items-center space-x-3 px-3 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <span x-show="sidebarOpen" class="font-medium">Cases</span>
+                </a>
+                
+                <a href="#" class="flex items-center space-x-3 px-3 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    <span x-show="sidebarOpen" class="font-medium">Research</span>
+                </a>
+                
+                <a href="#" class="flex items-center space-x-3 px-3 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <span x-show="sidebarOpen" class="font-medium">Documents</span>
+                </a>
+                
+                <a href="#" class="flex items-center space-x-3 px-3 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-4l-4 4-4-4z"></path>
+                    </svg>
+                    <span x-show="sidebarOpen" class="font-medium">AI Assistant</span>
+                </a>
+                
+                <a href="#" class="flex items-center space-x-3 px-3 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    <span x-show="sidebarOpen" class="font-medium">Settings</span>
+                </a>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="ml-64 transition-all duration-300" :class="{ 'ml-64': sidebarOpen, 'ml-16': !sidebarOpen }">
+        
+        <!-- Top Navbar -->
+        <header class="bg-gray-900 border-b border-gray-700 px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex-1 max-w-md">
+                    <div class="relative">
+                        <input type="text" x-model="searchQuery" placeholder="Search cases, documents..." 
+                               class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 pl-10 text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <svg class="absolute left-3 top-2.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <button @click="darkMode = !darkMode" class="text-gray-400 hover:text-white transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                        </svg>
+                    </button>
+                    
+                    <button class="relative text-gray-400 hover:text-white transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4.868 12.683A17.925 17.925 0 0112 21c7.962 0 12-1.21 12-2.683m-12 2.683a17.925 17.925 0 01-7.132-8.317M12 21V9m0 0l-3 3m3-3l3 3"></path>
+                        </svg>
+                        <span x-show="notifications > 0" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{{ notifications }}</span>
+                    </button>
+                    
+                    <div class="relative" x-data="{ profileOpen: false }">
+                        <button @click="profileOpen = !profileOpen" class="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors">
+                            <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                <span class="text-white font-medium text-sm">RK</span>
+                            </div>
+                            <span class="font-medium">Raj Kumar</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        
+                        <div x-show="profileOpen" @click.away="profileOpen = false" 
+                             class="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-lg py-2 z-50">
+                            <a href="#" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Profile</a>
+                            <a href="#" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Settings</a>
+                            <hr class="border-gray-600 my-1">
+                            <a href="#" class="block px-4 py-2 text-red-400 hover:bg-gray-700">Logout</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Dashboard -->
+        <main class="p-6 space-y-8">
+            
+            <!-- Welcome Header -->
+            <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-8 text-white">
+                <h1 class="text-3xl font-bold mb-2">Welcome back, Advocate Raj Kumar</h1>
+                <p class="text-blue-100">You have 3 active cases and 2 upcoming deadlines. Let's make today productive!</p>
+            </div>
+            
+            <!-- Case Cards Grid -->
+            <section>
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold">Active Cases</h2>
+                    <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        <span>New Case</span>
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Case Card 1 -->
+                    <div class="bg-gray-800 rounded-xl p-6 card-hover border border-gray-700">
+                        <div class="flex items-start justify-between mb-4">
+                            <div>
+                                <h3 class="text-lg font-semibold text-white">Amit Verma vs State</h3>
+                                <p class="text-gray-400">Criminal Appeal</p>
+                            </div>
+                            <span class="px-3 py-1 bg-green-600 text-white text-sm rounded-full">Active</span>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-gray-400">Risk Score</span>
+                                    <span class="text-white">75%</span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-2">
+                                    <div class="bg-red-500 h-2 rounded-full" style="width: 75%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-400 text-sm">Next Deadline</span>
+                                <span class="text-yellow-400 text-sm font-medium">2 days</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Case Card 2 -->
+                    <div class="bg-gray-800 rounded-xl p-6 card-hover border border-gray-700">
+                        <div class="flex items-start justify-between mb-4">
+                            <div>
+                                <h3 class="text-lg font-semibold text-white">Property Dispute</h3>
+                                <p class="text-gray-400">Civil Suit</p>
+                            </div>
+                            <span class="px-3 py-1 bg-blue-600 text-white text-sm rounded-full">Pending</span>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-gray-400">Risk Score</span>
+                                    <span class="text-white">45%</span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-2">
+                                    <div class="bg-yellow-500 h-2 rounded-full" style="width: 45%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-400 text-sm">Next Deadline</span>
+                                <span class="text-green-400 text-sm font-medium">12 days</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Case Card 3 -->
+                    <div class="bg-gray-800 rounded-xl p-6 card-hover border border-gray-700">
+                        <div class="flex items-start justify-between mb-4">
+                            <div>
+                                <h3 class="text-lg font-semibold text-white">Corporate Merger</h3>
+                                <p class="text-gray-400">M&A Transaction</p>
+                            </div>
+                            <span class="px-3 py-1 bg-purple-600 text-white text-sm rounded-full">Review</span>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-gray-400">Risk Score</span>
+                                    <span class="text-white">25%</span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-2">
+                                    <div class="bg-green-500 h-2 rounded-full" style="width: 25%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-400 text-sm">Next Deadline</span>
+                                <span class="text-red-400 text-sm font-medium">Overdue</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Deadline Alert Panel & AI Assistant -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                
+                <!-- Deadline Alerts -->
+                <section class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                    <h3 class="text-xl font-bold mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                        Deadline Alerts
+                    </h3>
+                    
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between p-3 bg-red-900/20 border border-red-700 rounded-lg">
+                            <div>
+                                <p class="text-white font-medium">Amit Verma vs State - Hearing</p>
+                                <p class="text-red-400 text-sm">Overdue by 1 day</p>
+                            </div>
+                            <span class="text-red-400 font-bold">URGENT</span>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-3 bg-yellow-900/20 border border-yellow-700 rounded-lg">
+                            <div>
+                                <p class="text-white font-medium">Property Dispute - Document Submission</p>
+                                <p class="text-yellow-400 text-sm">Due in 2 days</p>
+                            </div>
+                            <span class="text-yellow-400 font-bold">SOON</span>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-3 bg-green-900/20 border border-green-700 rounded-lg">
+                            <div>
+                                <p class="text-white font-medium">Corporate Merger - Final Review</p>
+                                <p class="text-green-400 text-sm">Due in 12 days</p>
+                            </div>
+                            <span class="text-green-400 font-bold">OK</span>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- AI Assistant Panel -->
+                <section class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                    <h3 class="text-xl font-bold mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                        </svg>
+                        AI Legal Assistant
+                    </h3>
+                    
+                    <div class="h-64 overflow-y-auto mb-4 space-y-3" id="chatContainer">
+                        <div class="flex justify-start">
+                            <div class="bg-gray-700 text-white p-3 rounded-lg max-w-xs">
+                                Hello! I'm your AI legal assistant. How can I help you today?
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-end">
+                            <div class="bg-blue-600 text-white p-3 rounded-lg max-w-xs">
+                                Can you help me draft a legal notice?
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-start">
+                            <div class="bg-gray-700 text-white p-3 rounded-lg max-w-xs">
+                                Of course! Please provide me with the details of the case and what type of notice you need.
+                            </div>
+                        </div>
+                        
+                        <div x-show="isTyping" class="flex justify-start">
+                            <div class="bg-gray-700 text-white p-3 rounded-lg">
+                                <div class="flex space-x-1">
+                                    <div class="w-2 h-2 bg-gray-400 rounded-full typing"></div>
+                                    <div class="w-2 h-2 bg-gray-400 rounded-full typing" style="animation-delay: 0.2s"></div>
+                                    <div class="w-2 h-2 bg-gray-400 rounded-full typing" style="animation-delay: 0.4s"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-2">
+                        <input type="text" placeholder="Ask me anything about your cases..." 
+                               class="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <button @click="isTyping = !isTyping" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </section>
+            </div>
+            
+            <!-- Document Upload Area -->
+            <section class="bg-gray-800 rounded-xl p-8 border border-gray-700 border-dashed">
+                <div class="text-center">
+                    <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    <h3 class="text-xl font-bold text-white mb-2">Upload Legal Documents</h3>
+                    <p class="text-gray-400 mb-6">Drag and drop PDF files here, or click to browse</p>
+                    <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors font-medium">
+                        Choose Files
+                    </button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div x-data="{ showToast: false }" class="fixed bottom-4 right-4 z-50">
+        <div x-show="showToast" x-transition class="bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            <span>Document uploaded successfully!</span>
+        </div>
+    </div>
+
+</body>
+</html>

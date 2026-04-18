@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - LegalMind AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Manrope', sans-serif; }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100">
+    <div class="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
+        <a href="/cases/dashboard" class="text-sm text-cyan-300 hover:text-cyan-200">Back to dashboard</a>
+        <div class="mt-4 rounded-3xl border border-slate-800 bg-slate-900 p-8">
+            <p class="text-sm uppercase tracking-[0.3em] text-cyan-300">Advocate Profile</p>
+            <h1 class="mt-2 text-3xl font-extrabold text-white">{{ current_user.name }}</h1>
+            <div class="mt-8 grid gap-4 sm:grid-cols-2">
+                <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
+                    <p class="text-sm text-slate-400">Enrollment number</p>
+                    <p class="mt-2 text-lg font-semibold text-white">{{ current_user.enrollment_number }}</p>
+                </div>
+                <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
+                    <p class="text-sm text-slate-400">State</p>
+                    <p class="mt-2 text-lg font-semibold text-white">{{ current_user.state }}</p>
+                </div>
+                <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
+                    <p class="text-sm text-slate-400">Verified</p>
+                    <p class="mt-2 text-lg font-semibold {% if current_user.is_verified %}text-emerald-300{% else %}text-amber-300{% endif %}">
+                        {{ 'Verified' if current_user.is_verified else 'Pending verification' }}
+                    </p>
+                </div>
+                <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
+                    <p class="text-sm text-slate-400">Role</p>
+                    <p class="mt-2 text-lg font-semibold text-white">{{ 'Administrator' if current_user.is_admin else 'Advocate' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

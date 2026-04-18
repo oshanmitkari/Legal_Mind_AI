@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ case.case_number }} - LegalMind AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Manrope', sans-serif; }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100">
+    <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <a href="/cases/dashboard" class="text-sm text-cyan-300 hover:text-cyan-200">Back to dashboard</a>
+                <h1 class="mt-2 text-3xl font-extrabold text-white">{{ case.case_number }}</h1>
+                <p class="mt-1 text-sm text-slate-400">{{ case.client_name }} | {{ case.case_type }} | {{ case.status|title }}</p>
+            </div>
+            <div class="flex gap-3">
+                <a href="/deadlines/" class="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200">Deadline tracker</a>
+                <a href="/logout" class="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200">Logout</a>
+            </div>
+        </div>
+
+        <section class="mb-8 grid gap-4 lg:grid-cols-4">
+            <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5 lg:col-span-2">
+                <p class="text-sm text-slate-400">Case summary</p>
+                <p class="mt-3 text-sm leading-7 text-slate-200">{{ case.description or 'No case description added yet.' }}</p>
+            </div>
+            <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+                <p class="text-sm text-slate-400">Risk score</p>
+                <p class="mt-2 text-3xl font-bold text-white">{{ '%.1f'|format(case.risk_score) }}</p>
+            </div>
+            <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+                <p class="text-sm text-slate-400">Primary advocate</p>
+                <p class="mt-2 text-xl font-bold text-white">{{ current_user.name }}</p>
+            </div>
+        </section>
+
+        <div class="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
+            <section class="space-y-8">
+                <div class="rounded-3xl border border-slate-800 bg-slate-900 p-6">
+                    <div class="mb-5 flex items-center justify-between">
+                        <h2 class="text-2xl font-bold text-white">Documents</h2>
+                        <span class="text-sm text-slate-400">{{ documents|length }} uploaded</span>
+                    </div>
+
+                    <form id="uploadForm" class="grid gap-4 md:grid-cols-[1fr_1fr_auto]">
+                        <select name="document_type" class="rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white">
+                            <option value="General">General</option>
+                            <option value="FIR">FIR</option>
+                            <option value="Evidence">Evidence</option>
+                            <option value="Judgment">Judgment</option>
+                            <option value="Motion">Motion</option>
+                        </select>
+                        <input name="file" type="file" accept=".pdf" required class="rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white">
+                        <button type="submit" class="rounded-xl bg-cyan-400 px-4 py-3 font-bold text-slate-950 hover:bg-cyan-300">Upload</button>
+                    </form>
+
+                    <div id="documentsError" class="mt-4 hidden rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200"></div>
+
+                    <div id="documentsList" class="mt-6 space-y-3">
+                        {% if documents %}
+                            {% for document in documents %}
+                                <article class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <div>
+                                            <h3 class="font-semibold text-white">{{ document.filename }}</h3>
+                                            <p class="text-sm text-slate-400">{{ document.document_type }} | {{ document.uploaded_at.strftime('%d %b %Y %I:%M %p') }}</p>
+                                        </div>
+                                        <button type="button" onclick="deleteDocument({{ document.id }})" class="text-sm font-semibold text-rose-300">Delete</button>
+                                    </div>
+                                </article>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-sm text-slate-400">No documents uploaded for this case yet.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="rounded-3xl border border-slate-800 bg-slate-900 p-6">
+                    <div class="mb-5 flex items-center justify-between">
+                        <h2 class="text-2xl font-bold text-white">AI Case Assistant</h2>
+                        <span class="text-sm text-slate-400">{{ chat_messages|length }} messages</span>
+                    </div>
+
+                    <div id="chatContainer" class="max-h-96 space-y-3 overflow-y-auto rounded-2xl border border-slate-800 bg-slate-950 p-4">
+                        {% if chat_messages %}
+                            {% for message in chat_messages %}
+                                <div class="{% if message.message_type == 'user' %}ml-auto bg-cyan-500 text-slate-950{% else %}bg-slate-800 text-slate-100{% endif %} max-w-[80%] rounded-2xl px-4 py-3 text-sm">
+                                    {{ message.content }}
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-sm text-slate-400">Ask a question about this matter to start the case-specific chat.</p>
+                        {% endif %}
+                    </div>
+                    <div id="chatSources" class="mt-4 hidden rounded-2xl border border-slate-800 bg-slate-950 p-4">
+                        <div class="flex items-center justify-between gap-3">
+                            <h3 class="text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">Retrieved Sources</h3>
+                            <span class="text-xs text-slate-500">RAG evidence for the latest answer</span>
+                        </div>
+                        <div id="chatSourcesList" class="mt-3 space-y-3"></div>
+                    </div>
+
+                    <form id="chatForm" class="mt-4 flex gap-3">
+                        <input id="chatInput" type="text" required placeholder="Ask about this case, documents, strategy, or risks" class="flex-1 rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white">
+                        <button type="submit" class="rounded-xl bg-cyan-400 px-4 py-3 font-bold text-slate-950 hover:bg-cyan-300">Send</button>
+                    </form>
+                </div>
+            </section>
+
+            <aside class="space-y-8">
+                <section class="rounded-3xl border border-slate-800 bg-slate-900 p-6">
+                    <div class="mb-5 flex items-center justify-between">
+                        <h2 class="text-2xl font-bold text-white">Deadlines</h2>
+                        <button type="button" onclick="document.getElementById('deadlineModal').classList.remove('hidden')" class="rounded-xl border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-200">Add</button>
+                    </div>
+
+                    <div id="deadlinesList" class="space-y-3">
+                        {% if deadlines %}
+                            {% for deadline in deadlines %}
+                                <article class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <div>
+                                            <h3 class="font-semibold text-white">{{ deadline.title }}</h3>
+                                            <p class="text-sm text-slate-400">{{ deadline.deadline_type or 'Court Date' }} | {{ deadline.due_date.strftime('%d %b %Y %I:%M %p') }}</p>
+                                        </div>
+                                        <span class="rounded-full px-3 py-1 text-xs font-semibold {% if deadline.status_color() == 'red' %}bg-rose-500/15 text-rose-300{% elif deadline.status_color() == 'amber' %}bg-amber-500/15 text-amber-300{% else %}bg-emerald-500/15 text-emerald-300{% endif %}">
+                                            {{ deadline.priority|title }}
+                                        </span>
+                                    </div>
+                                </article>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-sm text-slate-400">No deadlines have been added for this case yet.</p>
+                        {% endif %}
+                    </div>
+                </section>
+
+                <section class="rounded-3xl border border-slate-800 bg-slate-900 p-6">
+                    <h2 class="text-2xl font-bold text-white">Drafting tools</h2>
+                    <form id="draftForm" class="mt-4 space-y-3">
+                        <select id="templateType" required class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white">
+                            <option value="">Select document type</option>
+                            <option value="legal_notice">Legal Notice</option>
+                            <option value="fir_draft">FIR Draft</option>
+                            <option value="affidavit">Affidavit</option>
+                            <option value="bail_application">Bail Application</option>
+                            <option value="contract">Contract</option>
+                        </select>
+                        <button type="submit" class="w-full rounded-xl bg-emerald-400 px-4 py-3 font-bold text-slate-950 hover:bg-emerald-300">Generate draft</button>
+                    </form>
+                    <pre id="draftContent" class="mt-4 hidden whitespace-pre-wrap rounded-2xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-200"></pre>
+                </section>
+
+                <section class="rounded-3xl border border-slate-800 bg-slate-900 p-6">
+                    <h2 class="text-2xl font-bold text-white">Section suggester</h2>
+                    <form id="sectionsForm" class="mt-4 space-y-3">
+                        <textarea id="incidentDescription" rows="4" placeholder="Describe the incident to map relevant sections" class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white"></textarea>
+                        <button type="submit" class="w-full rounded-xl bg-violet-400 px-4 py-3 font-bold text-slate-950 hover:bg-violet-300">Analyze incident</button>
+                    </form>
+                    <pre id="sectionsContent" class="mt-4 hidden whitespace-pre-wrap rounded-2xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-200"></pre>
+                </section>
+            </aside>
+        </div>
+    </div>
+
+    <div id="deadlineModal" class="fixed inset-0 hidden bg-slate-950/75 px-4 py-8">
+        <div class="mx-auto max-w-lg rounded-3xl border border-slate-800 bg-slate-900 p-6">
+            <div class="mb-6 flex items-center justify-between">
+                <h3 class="text-xl font-bold text-white">Add deadline</h3>
+                <button type="button" onclick="document.getElementById('deadlineModal').classList.add('hidden')" class="text-slate-400">Close</button>
+            </div>
+            <form id="deadlineForm" class="space-y-4">
+                <input name="title" type="text" placeholder="Deadline title" required class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white">
+                <input name="due_date" type="datetime-local" required class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white">
+                <select name="deadline_type" class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white">
+                    <option value="Court Date">Court Date</option>
+                    <option value="Filing Deadline">Filing Deadline</option>
+                    <option value="Compliance">Compliance</option>
+                    <option value="Client Meeting">Client Meeting</option>
+                </select>
+                <select name="priority" class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white">
+                    <option value="high">High</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="low">Low</option>
+                </select>
+                <button type="submit" class="w-full rounded-xl bg-cyan-400 px-4 py-3 font-bold text-slate-950 hover:bg-cyan-300">Save deadline</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const caseId = {{ case.id }};
+
+        async function refreshDocuments() {
+            const response = await fetch(`/documents/${caseId}`);
+            const documents = await response.json();
+            const container = document.getElementById('documentsList');
+
+            if (!documents.length) {
+                container.innerHTML = '<p class="text-sm text-slate-400">No documents uploaded for this case yet.</p>';
+                return;
+            }
+
+            container.innerHTML = documents.map((document) => `
+                <article class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <h3 class="font-semibold text-white">${document.filename}</h3>
+                            <p class="text-sm text-slate-400">${document.document_type || 'General'} | ${new Date(document.uploaded_at).toLocaleString()}</p>
+                        </div>
+                        <button type="button" onclick="deleteDocument(${document.id})" class="text-sm font-semibold text-rose-300">Delete</button>
+                    </div>
+                </article>
+            `).join('');
+        }
+
+        async function refreshDeadlines() {
+            const response = await fetch(`/deadlines/alerts`);
+            const allAlerts = await response.json();
+            const container = document.getElementById('deadlinesList');
+            const caseAlerts = allAlerts.filter((item) => item.case_number === {{ case.case_number|tojson }});
+
+            if (!caseAlerts.length) {
+                return;
+            }
+
+            container.innerHTML = caseAlerts.map((deadline) => `
+                <article class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <h3 class="font-semibold text-white">${deadline.title}</h3>
+                            <p class="text-sm text-slate-400">${deadline.deadline_type || 'Court Date'} | ${new Date(deadline.due_date).toLocaleString()}</p>
+                        </div>
+                        <span class="rounded-full px-3 py-1 text-xs font-semibold bg-slate-800 text-slate-200">${deadline.priority}</span>
+                    </div>
+                </article>
+            `).join('');
+        }
+
+        async function deleteDocument(documentId) {
+            await fetch(`/documents/${documentId}`, { method: 'DELETE' });
+            refreshDocuments();
+        }
+
+        document.getElementById('uploadForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const errorBox = document.getElementById('documentsError');
+            errorBox.classList.add('hidden');
+
+            const formData = new FormData(event.target);
+            const response = await fetch(`/documents/${caseId}/upload`, {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            if (!response.ok) {
+                errorBox.textContent = result.error || 'Upload failed.';
+                errorBox.classList.remove('hidden');
+                return;
+            }
+
+            event.target.reset();
+            refreshDocuments();
+        });
+
+        document.getElementById('deadlineForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const form = new FormData(event.target);
+            const payload = {
+                case_id: caseId,
+                title: form.get('title'),
+                due_date: form.get('due_date'),
+                deadline_type: form.get('deadline_type'),
+                priority: form.get('priority')
+            };
+
+            await fetch('/deadlines/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            document.getElementById('deadlineModal').classList.add('hidden');
+            event.target.reset();
+            window.location.reload();
+        });
+
+        document.getElementById('chatForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            const response = await fetch(`/ai/chat/${caseId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message })
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                alert(result.error || 'AI request failed.');
+                return;
+            }
+
+            const container = document.getElementById('chatContainer');
+            container.insertAdjacentHTML('beforeend', `
+                <div class="ml-auto max-w-[80%] rounded-2xl bg-cyan-500 px-4 py-3 text-sm text-slate-950">${message}</div>
+                <div class="max-w-[80%] rounded-2xl bg-slate-800 px-4 py-3 text-sm text-slate-100">${result.response}</div>
+            `);
+            input.value = '';
+            container.scrollTop = container.scrollHeight;
+            renderChatSources(result.sources || []);
+        });
+
+        document.getElementById('draftForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const response = await fetch('/ai/draft', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ case_id: caseId, template_type: document.getElementById('templateType').value })
+            });
+            const result = await response.json();
+            document.getElementById('draftContent').textContent = result.document || result.error;
+            document.getElementById('draftContent').classList.remove('hidden');
+        });
+
+        document.getElementById('sectionsForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const response = await fetch('/ai/suggest-sections', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ incident: document.getElementById('incidentDescription').value.trim() })
+            });
+            const result = await response.json();
+            document.getElementById('sectionsContent').textContent = result.analysis || result.error;
+            document.getElementById('sectionsContent').classList.remove('hidden');
+        });
+
+        function renderChatSources(sources) {
+            const wrapper = document.getElementById('chatSources');
+            const list = document.getElementById('chatSourcesList');
+
+            if (!sources.length) {
+                wrapper.classList.add('hidden');
+                list.innerHTML = '';
+                return;
+            }
+
+            wrapper.classList.remove('hidden');
+            list.innerHTML = sources.map((source) => `
+                <article class="rounded-2xl border border-slate-800 bg-slate-900/80 p-4">
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <h4 class="font-semibold text-white">${source.filename}</h4>
+                            <p class="text-xs text-slate-400">${source.document_type} | chunk ${source.chunk_index + 1}</p>
+                        </div>
+                    </div>
+                    <p class="mt-3 text-sm leading-6 text-slate-300">${source.snippet}</p>
+                </article>
+            `).join('');
+        }
+    </script>
+</body>
+</html>

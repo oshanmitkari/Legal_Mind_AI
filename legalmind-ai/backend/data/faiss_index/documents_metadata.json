@@ -1,0 +1,50 @@
+{
+  "dimension": 128,
+  "next_vector_id": 5,
+  "documents": {
+    "doc-2": {
+      "document_id": 2,
+      "case_id": 1,
+      "file_path": "D:\\legalmind-ai\\backend\\uploads\\case_1\\second_document.pdf",
+      "chunk_count": 1,
+      "vector_ids": [
+        2
+      ]
+    },
+    "doc-1": {
+      "document_id": 1,
+      "case_id": 1,
+      "file_path": "D:\\legalmind-ai\\backend\\uploads\\case_1\\rag.pdf",
+      "chunk_count": 1,
+      "vector_ids": [
+        4
+      ]
+    }
+  },
+  "chunks": {
+    "1": {
+      "document_id": 1,
+      "case_id": 1,
+      "file_path": "D:\\legalmind-ai\\backend\\uploads\\case_1\\test_document.pdf",
+      "chunk_index": 0,
+      "text": "This is a legal test PDF for FAISS indexing and document upload verification."
+    },
+    "2": {
+      "document_id": 2,
+      "case_id": 1,
+      "file_path": "D:\\legalmind-ai\\backend\\uploads\\case_1\\second_document.pdf",
+      "chunk_index": 0,
+      "text": "This is a legal test PDF for FAISS indexing and document upload verification."
+    },
+    "4": {
+      "document_id": 1,
+      "case_id": 1,
+      "file_path": "D:\\legalmind-ai\\backend\\uploads\\case_1\\rag.pdf",
+      "chunk_index": 0,
+      "text": "The claimant alleges delayed delivery and seeks compensation for breach of contract."
+    }
+  }
+}amages."
+    }
+  }
+}

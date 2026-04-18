@@ -1,0 +1,22 @@
+{
+  "MH/1234/2020": {
+    "name": "Raj Kumar",
+    "state": "Maharashtra"
+  },
+  "MH/5678/2019": {
+    "name": "Priya Singh",
+    "state": "Maharashtra"
+  },
+  "DL/1001/2021": {
+    "name": "Amit Verma",
+    "state": "Delhi"
+  },
+  "KA/2234/2020": {
+    "name": "Dr. Seema Gupta",
+    "state": "Karnataka"
+  },
+  "TN/3456/2018": {
+    "name": "V. Raman",
+    "state": "Tamil Nadu"
+  }
+}

@@ -1,0 +1,155 @@
+/* LegalMind AI - Global Styles */
+
+:root {
+    --primary-color: #0d6efd;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --success-color: #198754;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+}
+
+/* Navigation */
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.5rem;
+}
+
+/* Cards */
+.card {
+    border: none;
+    border-radius: 8px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1) !important;
+}
+
+.hover-card {
+    cursor: pointer;
+}
+
+/* Badges */
+.badge {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.8rem;
+}
+
+/* Buttons */
+.btn {
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+}
+
+/* Forms */
+.form-control, .form-select {
+    border-radius: 6px;
+    border: 1px solid #ddd;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Risk Score Colors */
+.risk-high {
+    color: var(--danger-color);
+}
+
+.risk-medium {
+    color: var(--warning-color);
+}
+
+.risk-low {
+    color: var(--success-color);
+}
+
+/* Deadline Alert Colors */
+.deadline-red {
+    background-color: #ffe3e6;
+    border-left: 4px solid var(--danger-color);
+    color: var(--danger-color);
+}
+
+.deadline-amber {
+    background-color: #fff8e6;
+    border-left: 4px solid var(--warning-color);
+    color: #856404;
+}
+
+.deadline-green {
+    background-color: #e3f2fd;
+    border-left: 4px solid var(--success-color);
+    color: var(--success-color);
+}
+
+/* Chat Interface */
+.chat-container {
+    height: 500px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow-y: auto;
+    padding: 1rem;
+    background-color: white;
+}
+
+.chat-message {
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    max-width: 80%;
+}
+
+.chat-message.user {
+    background-color: #e3f2fd;
+    margin-left: auto;
+    text-align: right;
+}
+
+.chat-message.assistant {
+    background-color: #f5f5f5;
+}
+
+/* Modal */
+.modal-header {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.modal-header .btn-close {
+    filter: brightness(0) invert(1);
+}
+
+/* Tables */
+.table {
+    background-color: white;
+}
+
+.table thead {
+    background-color: #f8f9fa;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .chat-message {
+        max-width: 95%;
+    }
+    
+    .navbar-brand {
+        font-size: 1.2rem;
+    }
+}

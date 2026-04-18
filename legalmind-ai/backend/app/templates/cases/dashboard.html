@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - LegalMind AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Manrope', sans-serif; }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100">
+    <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <header class="mb-8 flex flex-col gap-4 rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-cyan-950 p-6 shadow-2xl shadow-cyan-950/20 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+                <p class="text-sm uppercase tracking-[0.3em] text-cyan-300">LegalMind AI</p>
+                <h1 class="mt-2 text-3xl font-extrabold text-white">Welcome, {{ current_user.name }}</h1>
+                <p class="mt-2 max-w-2xl text-sm text-slate-300">
+                    Manage verified legal matters, track deadlines, and move from intake to case action from one workspace.
+                </p>
+            </div>
+            <div class="flex flex-wrap gap-3">
+                <a href="/deadlines/" class="rounded-xl border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-sm font-semibold text-amber-100">
+                    {{ upcoming_deadlines }} upcoming deadlines
+                </a>
+                <a href="/logout" class="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 hover:border-slate-500">
+                    Logout
+                </a>
+            </div>
+        </header>
+
+        <section class="mb-8 grid gap-4 md:grid-cols-3">
+            <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+                <p class="text-sm text-slate-400">Active cases</p>
+                <p class="mt-2 text-3xl font-bold text-white">{{ cases|length }}</p>
+            </div>
+            <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+                <p class="text-sm text-slate-400">Verified advocate</p>
+                <p class="mt-2 text-3xl font-bold text-emerald-300">{{ 'Yes' if current_user.is_verified else 'Pending' }}</p>
+            </div>
+            <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+                <p class="text-sm text-slate-400">Bar enrollment</p>
+                <p class="mt-2 text-xl font-bold text-white">{{ current_user.enrollment_number }}</p>
+            </div>
+        </section>
+
+        <section class="grid gap-8 lg:grid-cols-[1.6fr_1fr]">
+            <div class="rounded-3xl border border-slate-800 bg-slate-900 p-6">
+                <div class="mb-6 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white">Cases</h2>
+                        <p class="text-sm text-slate-400">Open each case to manage documents, deadlines, and AI assistance.</p>
+                    </div>
+                    <button
+                        type="button"
+                        onclick="document.getElementById('createCaseModal').classList.remove('hidden')"
+                        class="rounded-xl bg-cyan-400 px-4 py-2 text-sm font-bold text-slate-950 hover:bg-cyan-300"
+                    >
+                        New Case
+                    </button>
+                </div>
+
+                {% if cases %}
+                    <div class="grid gap-4 md:grid-cols-2">
+                        {% for case in cases %}
+                            {% set normalized_status = case.status|lower %}
+                            <article class="rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
+                                <div class="flex items-start justify-between gap-4">
+                                    <div>
+                                        <p class="text-xs uppercase tracking-[0.24em] text-slate-500">{{ case.case_type }}</p>
+                                        <h3 class="mt-2 text-lg font-bold text-white">{{ case.case_number }}</h3>
+                                        <p class="mt-1 text-sm text-slate-400">{{ case.client_name }}</p>
+                                    </div>
+                                    <span class="rounded-full px-3 py-1 text-xs font-semibold {% if normalized_status == 'open' %}bg-emerald-500/15 text-emerald-300{% elif normalized_status == 'pending' %}bg-amber-500/15 text-amber-300{% else %}bg-slate-700 text-slate-200{% endif %}">
+                                        {{ case.status|title }}
+                                    </span>
+                                </div>
+
+                                <div class="mt-5">
+                                    <div class="mb-2 flex items-center justify-between text-sm">
+                                        <span class="text-slate-400">Risk score</span>
+                                        <span class="font-semibold text-white">{{ '%.1f'|format(case.risk_score) }}/100</span>
+                                    </div>
+                                    <div class="h-2 rounded-full bg-slate-800">
+                                        <div class="h-2 rounded-full {% if case.risk_score > 70 %}bg-rose-500{% elif case.risk_score > 40 %}bg-amber-400{% else %}bg-emerald-400{% endif %}" style="width: {{ case.risk_score }}%"></div>
+                                    </div>
+                                </div>
+
+                                <a href="/cases/{{ case.id }}" class="mt-5 inline-flex w-full items-center justify-center rounded-xl border border-slate-700 px-4 py-3 text-sm font-semibold text-slate-100 hover:border-cyan-400 hover:text-cyan-200">
+                                    Open case workspace
+                                </a>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="rounded-2xl border border-dashed border-slate-700 bg-slate-950/60 p-12 text-center">
+                        <h3 class="text-xl font-semibold text-white">No cases yet</h3>
+                        <p class="mt-2 text-sm text-slate-400">Create your first matter to start using the dashboard properly.</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <aside class="space-y-6">
+                <section class="rounded-3xl border border-slate-800 bg-slate-900 p-6">
+                    <h2 class="text-xl font-bold text-white">Quick links</h2>
+                    <div class="mt-4 space-y-3">
+                        <a href="/deadlines/" class="block rounded-2xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-slate-200 hover:border-cyan-400">Deadline tracker</a>
+                        <a href="/profile" class="block rounded-2xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-slate-200 hover:border-cyan-400">Advocate profile</a>
+                    </div>
+                </section>
+
+                <section class="rounded-3xl border border-slate-800 bg-slate-900 p-6">
+                    <h2 class="text-xl font-bold text-white">Implementation notes</h2>
+                    <p class="mt-3 text-sm text-slate-400">
+                        This page is now connected to the actual Flask case routes. New matters submit directly to the backend and case cards open the detail workspace instead of raw JSON.
+                    </p>
+                </section>
+            </aside>
+        </section>
+    </div>
+
+    <div id="createCaseModal" class="fixed inset-0 hidden bg-slate-950/75 px-4 py-8">
+        <div class="mx-auto max-w-lg rounded-3xl border border-slate-800 bg-slate-900 p-6">
+            <div class="mb-6 flex items-center justify-between">
+                <h3 class="text-xl font-bold text-white">Create case</h3>
+                <button type="button" onclick="document.getElementById('createCaseModal').classList.add('hidden')" class="text-slate-400">Close</button>
+            </div>
+
+            <form id="createCaseForm" class="space-y-4">
+                <input id="caseNumber" type="text" placeholder="Case number" required class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white">
+                <input id="clientName" type="text" placeholder="Client name" required class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white">
+                <select id="caseType" required class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white">
+                    <option value="">Select case type</option>
+                    <option value="Criminal">Criminal</option>
+                    <option value="Civil">Civil</option>
+                    <option value="Corporate">Corporate</option>
+                    <option value="Family">Family</option>
+                    <option value="Intellectual Property">Intellectual Property</option>
+                </select>
+                <textarea id="description" rows="4" placeholder="Case description" class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white"></textarea>
+                <div id="caseFormError" class="hidden rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200"></div>
+                <button type="submit" class="w-full rounded-xl bg-cyan-400 px-4 py-3 font-bold text-slate-950 hover:bg-cyan-300">Create case</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('createCaseForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const errorBox = document.getElementById('caseFormError');
+            errorBox.classList.add('hidden');
+
+            const payload = {
+                case_number: document.getElementById('caseNumber').value.trim(),
+                client_name: document.getElementById('clientName').value.trim(),
+                case_type: document.getElementById('caseType').value,
+                description: document.getElementById('description').value.trim()
+            };
+
+            const response = await fetch('/cases/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+            if (!response.ok) {
+                errorBox.textContent = result.error || 'Unable to create the case right now.';
+                errorBox.classList.remove('hidden');
+                return;
+            }
+
+            window.location.href = `/cases/${result.id}`;
+        });
+    </script>
+</body>
+</html>

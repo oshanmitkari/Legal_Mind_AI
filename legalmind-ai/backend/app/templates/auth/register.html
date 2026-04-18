@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - LegalMind AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Manrope', sans-serif; }
+        .gradient-bg { background: radial-gradient(circle at top, #172554 0%, #0f172a 45%, #020617 100%); }
+        .glass { backdrop-filter: blur(18px); background: rgba(15, 23, 42, 0.78); border: 1px solid rgba(148, 163, 184, 0.16); }
+        .animate-fade-in { animation: fadeIn 0.5s ease-in; }
+        .verify-pulse { animation: pulseGlow 1.2s ease-in-out infinite; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.25); }
+            50% { box-shadow: 0 0 0 10px rgba(56, 189, 248, 0.04); }
+        }
+    </style>
+</head>
+<body class="gradient-bg text-slate-100 min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-xl animate-fade-in">
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-cyan-500/20">
+                <span class="text-slate-950 font-bold text-xl">LM</span>
+            </div>
+            <h1 class="text-3xl font-bold text-white mb-2">LegalMind AI</h1>
+            <p class="text-slate-400">Prototype advocate onboarding with State Bar Council verification</p>
+        </div>
+
+        <div class="glass rounded-3xl p-8 shadow-2xl">
+            <div class="flex items-start justify-between gap-4 mb-6">
+                <div>
+                    <h2 class="text-2xl font-semibold text-white">Create Account</h2>
+                    <p class="text-sm text-slate-400 mt-1">The enrollment field verifies against a seeded demo Bar Council database.</p>
+                </div>
+                <div class="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-xs text-cyan-200">
+                    Judge Demo Prototype
+                </div>
+            </div>
+
+            <form id="registerForm" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="enrollmentNumber" class="block text-sm font-medium text-slate-300 mb-2">
+                            Enrollment Number *
+                        </label>
+                        <input type="text" class="w-full bg-slate-900/70 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition-all"
+                               id="enrollmentNumber" placeholder="MH/1234/2020" required>
+                        <p class="text-xs text-slate-500 mt-1">Format: ST/XXXX/YYYY</p>
+                    </div>
+
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-slate-300 mb-2">
+                            Full Name *
+                        </label>
+                        <input type="text" class="w-full bg-slate-900/70 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition-all"
+                               id="name" placeholder="Raj Kumar" required>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="state" class="block text-sm font-medium text-slate-300 mb-2">
+                        State *
+                    </label>
+                    <select class="w-full bg-slate-900/70 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition-all"
+                            id="state" required>
+                        <option value="" class="bg-slate-900">Select State</option>
+                        <option value="Maharashtra" class="bg-slate-900">Maharashtra</option>
+                        <option value="Delhi" class="bg-slate-900">Delhi</option>
+                        <option value="Karnataka" class="bg-slate-900">Karnataka</option>
+                        <option value="Tamil Nadu" class="bg-slate-900">Tamil Nadu</option>
+                        <option value="Gujarat" class="bg-slate-900">Gujarat</option>
+                        <option value="Rajasthan" class="bg-slate-900">Rajasthan</option>
+                        <option value="Uttar Pradesh" class="bg-slate-900">Uttar Pradesh</option>
+                        <option value="West Bengal" class="bg-slate-900">West Bengal</option>
+                    </select>
+                </div>
+
+                <div id="verificationPanel" class="rounded-2xl border border-slate-700 bg-slate-900/70 p-4 transition-all">
+                    <div class="flex items-start gap-3">
+                        <div id="verificationIconWrapper" class="w-10 h-10 rounded-2xl bg-slate-800 flex items-center justify-center text-slate-400">
+                            <svg id="verificationIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-3-3v6m9 0A9 9 0 1112 3a9 9 0 019 9z"></path>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between gap-3">
+                                <h4 class="text-sm font-semibold text-white">State Bar Council Verification</h4>
+                                <span id="verificationBadge" class="hidden rounded-full px-3 py-1 text-xs font-semibold"></span>
+                            </div>
+                            <p id="verificationMessage" class="text-sm text-slate-400 mt-1">
+                                Enter enrollment number and state to simulate live Bar Council verification.
+                            </p>
+                            <div id="verificationMeta" class="hidden mt-3 rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-slate-300 mb-2">
+                            Password *
+                        </label>
+                        <input type="password" class="w-full bg-slate-900/70 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition-all"
+                               id="password" placeholder="Minimum 6 characters" required>
+                    </div>
+
+                    <div>
+                        <label for="confirmPassword" class="block text-sm font-medium text-slate-300 mb-2">
+                            Confirm Password *
+                        </label>
+                        <input type="password" class="w-full bg-slate-900/70 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition-all"
+                               id="confirmPassword" placeholder="Repeat password" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-semibold py-3 px-4 rounded-xl transition-all duration-200 shadow-lg shadow-cyan-500/20">
+                    <span class="flex items-center justify-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                        </svg>
+                        Create Account
+                    </span>
+                </button>
+            </form>
+
+            <div class="mt-6 text-center">
+                <p class="text-slate-400">
+                    Already have an account?
+                    <a href="{{ url_for('auth.login') }}" class="text-cyan-300 hover:text-cyan-200 transition-colors font-medium">
+                        Sign in
+                    </a>
+                </p>
+            </div>
+        </div>
+
+        <div id="alert" class="mt-4 p-4 rounded-xl opacity-0 transition-opacity duration-300 hidden">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <svg id="alertIcon" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p id="alertMessage" class="text-sm font-medium"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const enrollmentInput = document.getElementById('enrollmentNumber');
+        const stateInput = document.getElementById('state');
+        const nameInput = document.getElementById('name');
+        const verificationPanel = document.getElementById('verificationPanel');
+        const verificationIconWrapper = document.getElementById('verificationIconWrapper');
+        const verificationIcon = document.getElementById('verificationIcon');
+        const verificationBadge = document.getElementById('verificationBadge');
+        const verificationMessage = document.getElementById('verificationMessage');
+        const verificationMeta = document.getElementById('verificationMeta');
+        let verifyTimer = null;
+        let lastVerifiedEnrollment = null;
+        let enrollmentVerified = false;
+
+        [enrollmentInput, stateInput].forEach((element) => {
+            element.addEventListener('input', scheduleVerification);
+            element.addEventListener('change', scheduleVerification);
+        });
+
+        nameInput.addEventListener('input', () => {
+            if (lastVerifiedEnrollment && nameInput.value.trim() !== verificationMeta.dataset.advocateName) {
+                showVerificationState('idle', 'Registry record found. Name will be matched on final registration submit.');
+            }
+        });
+
+        function scheduleVerification() {
+            enrollmentVerified = false;
+            lastVerifiedEnrollment = null;
+            verificationMeta.classList.add('hidden');
+            verificationMeta.textContent = '';
+
+            const enrollmentNumber = enrollmentInput.value.trim().toUpperCase();
+            const state = stateInput.value.trim();
+
+            if (!enrollmentNumber || !state) {
+                showVerificationState('idle', 'Enter enrollment number and state to simulate live Bar Council verification.');
+                return;
+            }
+
+            showVerificationState('checking', `Checking ${state} State Bar Council database...`);
+            clearTimeout(verifyTimer);
+            verifyTimer = setTimeout(runVerification, 900);
+        }
+
+        async function runVerification() {
+            const enrollmentNumber = enrollmentInput.value.trim().toUpperCase();
+            const state = stateInput.value.trim();
+
+            if (!enrollmentNumber || !state) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/register/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        enrollment_number: enrollmentNumber,
+                        state: state
+                    })
+                });
+                const result = await response.json();
+
+                if (response.ok) {
+                    enrollmentVerified = true;
+                    lastVerifiedEnrollment = enrollmentNumber;
+                    verificationMeta.dataset.advocateName = result.advocate_name;
+                    verificationMeta.innerHTML = `
+                        <div><span class="font-semibold">Matched Advocate:</span> ${result.advocate_name}</div>
+                        <div class="mt-1"><span class="font-semibold">Council:</span> ${result.council_name}</div>
+                        <div class="mt-1"><span class="font-semibold">Status:</span> ${result.status}</div>
+                    `;
+                    verificationMeta.classList.remove('hidden');
+                    showVerificationState('success', result.message);
+                } else {
+                    showVerificationState('error', result.message || 'Verification failed.');
+                }
+            } catch (error) {
+                showVerificationState('error', `Verification service error: ${error.message}`);
+            }
+        }
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const enrollmentNumber = enrollmentInput.value.trim().toUpperCase();
+
+            if (password !== confirmPassword) {
+                showAlert('Passwords do not match', 'error');
+                return;
+            }
+
+            if (password.length < 6) {
+                showAlert('Password must be at least 6 characters long', 'error');
+                return;
+            }
+
+            if (!enrollmentVerified || lastVerifiedEnrollment !== enrollmentNumber) {
+                showAlert('Please wait for enrollment verification before registering.', 'error');
+                scheduleVerification();
+                return;
+            }
+
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-slate-950 mx-auto"></div>';
+            submitBtn.disabled = true;
+
+            const data = {
+                enrollment_number: enrollmentNumber,
+                name: nameInput.value.trim(),
+                state: stateInput.value,
+                password: password
+            };
+
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showAlert('Verification successful! Redirecting to login...', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 1800);
+                } else {
+                    showAlert(result.error || 'Registration failed', 'error');
+                }
+            } catch (error) {
+                showAlert(`Error: ${error.message}`, 'error');
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+
+        function showVerificationState(type, message) {
+            verificationMessage.textContent = message;
+            verificationBadge.classList.remove('hidden', 'bg-emerald-400/15', 'text-emerald-200', 'bg-rose-400/15', 'text-rose-200', 'bg-cyan-400/15', 'text-cyan-100');
+            verificationIconWrapper.className = 'w-10 h-10 rounded-2xl flex items-center justify-center';
+            verificationPanel.className = 'rounded-2xl border p-4 transition-all';
+
+            if (type === 'checking') {
+                verificationPanel.classList.add('border-cyan-400/30', 'bg-cyan-400/10', 'verify-pulse');
+                verificationIconWrapper.classList.add('bg-cyan-400/20', 'text-cyan-200');
+                verificationBadge.textContent = 'Verifying';
+                verificationBadge.classList.add('bg-cyan-400/15', 'text-cyan-100');
+                verificationIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
+                return;
+            }
+
+            verificationPanel.classList.remove('verify-pulse');
+
+            if (type === 'success') {
+                verificationPanel.classList.add('border-emerald-400/30', 'bg-emerald-400/10');
+                verificationIconWrapper.classList.add('bg-emerald-400/20', 'text-emerald-200');
+                verificationBadge.textContent = 'Verified';
+                verificationBadge.classList.add('bg-emerald-400/15', 'text-emerald-200');
+                verificationIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>';
+                return;
+            }
+
+            if (type === 'error') {
+                verificationPanel.classList.add('border-rose-400/30', 'bg-rose-400/10');
+                verificationIconWrapper.classList.add('bg-rose-400/20', 'text-rose-200');
+                verificationBadge.textContent = 'Not Found';
+                verificationBadge.classList.add('bg-rose-400/15', 'text-rose-200');
+                verificationIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>';
+                return;
+            }
+
+            verificationPanel.classList.add('border-slate-700', 'bg-slate-900/70');
+            verificationIconWrapper.classList.add('bg-slate-800', 'text-slate-400');
+            verificationBadge.classList.add('hidden');
+            verificationIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-3-3v6m9 0A9 9 0 1112 3a9 9 0 019 9z"></path>';
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.getElementById('alert');
+            const alertIcon = document.getElementById('alertIcon');
+            const alertMessage = document.getElementById('alertMessage');
+
+            alertMessage.textContent = message;
+
+            if (type === 'success') {
+                alertDiv.className = 'mt-4 p-4 rounded-xl bg-emerald-400/10 border border-emerald-400/30 text-emerald-200 opacity-100 transition-opacity duration-300';
+                alertIcon.className = 'w-5 h-5 text-emerald-200';
+                alertIcon.innerHTML = '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>';
+            } else {
+                alertDiv.className = 'mt-4 p-4 rounded-xl bg-rose-400/10 border border-rose-400/30 text-rose-200 opacity-100 transition-opacity duration-300';
+                alertIcon.className = 'w-5 h-5 text-rose-200';
+                alertIcon.innerHTML = '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>';
+            }
+
+            alertDiv.classList.remove('hidden');
+
+            setTimeout(() => {
+                alertDiv.classList.add('opacity-0');
+                setTimeout(() => alertDiv.classList.add('hidden'), 300);
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
