@@ -10,18 +10,20 @@ cases_bp = Blueprint('cases', __name__)
 @cases_bp.route('/dashboard', methods=['GET'])
 @login_required
 def dashboard():
-    """F3: Case Command Center - Display all cases"""
+    """F3: Case Command Center - Display all cases with Bootstrap 5 UI"""
     current_user = get_current_user()
     page = request.args.get('page', 1, type=int)
-    
+
     if current_user.is_admin:
         cases = Case.query.paginate(page=page, per_page=10)
     else:
         cases = Case.query.filter_by(user_id=current_user.id).paginate(page=page, per_page=10)
-    
+
     upcoming_deadlines = _get_user_deadline_count(current_user.id, current_user.is_admin)
+
+    # Use Bootstrap 5 template
     return render_template(
-        'cases/dashboard.html',
+        'cases/dashboard_bootstrap.html',
         cases=cases.items,
         pagination=cases,
         current_user=current_user,

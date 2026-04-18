@@ -22,18 +22,25 @@ def create_app(config_name='development'):
     # Register blueprints
     from app.routes.auth import auth_bp
     from app.routes.cases import cases_bp
-    from app.routes.documents import documents_bp, upload_document
+    try:
+        from app.routes.documents import documents_bp, upload_document
+        documents_available = True
+    except ImportError:
+        documents_available = False
+        print("⚠️  PyMuPDF not installed - Document upload (F5) disabled")
+
     from app.routes.ai_assistant import ai_bp
     from app.routes.deadlines import deadlines_bp
     from app.routes.risk import risk_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(cases_bp, url_prefix='/cases')
-    app.register_blueprint(documents_bp, url_prefix='/documents')
+    if documents_available:
+        app.register_blueprint(documents_bp, url_prefix='/documents')
+        app.add_url_rule('/upload', endpoint='root_upload', view_func=upload_document, methods=['POST'])
     app.register_blueprint(ai_bp, url_prefix='/ai')
     app.register_blueprint(deadlines_bp, url_prefix='/deadlines')
     app.register_blueprint(risk_bp, url_prefix='/risk')
-    app.add_url_rule('/upload', endpoint='root_upload', view_func=upload_document, methods=['POST'])
 
     # Create tables
     with app.app_context():

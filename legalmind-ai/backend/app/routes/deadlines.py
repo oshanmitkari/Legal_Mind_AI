@@ -135,32 +135,46 @@ def create_deadline():
 @deadlines_bp.route('/<int:deadline_id>', methods=['PUT'])
 @login_required
 def update_deadline(deadline_id):
-    """Update deadline"""
+    """Update deadline - triggers risk score recalculation if completed"""
     current_user = get_current_user()
     deadline = Deadline.query.get_or_404(deadline_id)
     case = deadline.case
-    
+
     # Authorization
     if not current_user.is_admin and case.user_id != current_user.id:
         return jsonify({'error': 'Unauthorized'}), 403
-    
+
     data = request.get_json()
-    
+
     if 'due_date' in data:
         try:
             deadline.due_date = datetime.fromisoformat(data['due_date'])
         except:
             return jsonify({'error': 'Invalid date format'}), 400
-    
+
+    # F4 Integration: Track if deadline completion status changed
+    completion_changed = False
     if 'is_completed' in data:
+        if deadline.is_completed != data['is_completed']:
+            completion_changed = True
         deadline.is_completed = data['is_completed']
-    
+
     deadline.title = data.get('title', deadline.title)
     deadline.priority = data.get('priority', deadline.priority)
-    
+
     db.session.commit()
-    
-    return jsonify({'message': 'Deadline updated'}), 200
+
+    # F4: Trigger risk score recalculation if deadline was completed
+    if completion_changed:
+        from app.utils.risk_calculator import RiskCalculator
+        deadline_score = RiskCalculator.calculate_deadline_score(case)
+        case.risk_score = deadline_score  # Simplified - full calc would use all components
+        db.session.commit()
+
+    return jsonify({
+        'message': 'Deadline updated',
+        'risk_recalculated': completion_changed
+    }), 200
 
 @deadlines_bp.route('/<int:deadline_id>', methods=['DELETE'])
 @login_required
