@@ -25,12 +25,14 @@ def create_app(config_name='development'):
     from app.routes.documents import documents_bp, upload_document
     from app.routes.ai_assistant import ai_bp
     from app.routes.deadlines import deadlines_bp
+    from app.routes.risk import risk_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(cases_bp, url_prefix='/cases')
     app.register_blueprint(documents_bp, url_prefix='/documents')
     app.register_blueprint(ai_bp, url_prefix='/ai')
     app.register_blueprint(deadlines_bp, url_prefix='/deadlines')
+    app.register_blueprint(risk_bp, url_prefix='/risk')
     app.add_url_rule('/upload', endpoint='root_upload', view_func=upload_document, methods=['POST'])
 
     # Create tables

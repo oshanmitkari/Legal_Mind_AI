@@ -5,6 +5,7 @@ from app.models import db, Case, ChatMessage, Document
 from app.services.document_search_service import retrieve_case_document_snippets
 import google.generativeai as genai
 from flask import current_app
+from datetime import datetime
 import os
 
 ai_bp = Blueprint('ai', __name__)
@@ -104,39 +105,62 @@ Provide a detailed, case-specific legal response based on the case context provi
 @ai_bp.route('/research', methods=['POST'])
 @login_required
 def legal_research():
-    """F7: Legal Research (RAG) - Query Indian legal codes"""
+    """F7: Legal Research (RAG) - Query Indian legal codes
+
+    Enhanced version with structured citations and section references.
+    Future enhancement: Add RAG from pre-loaded FAISS index of Indian statutes.
+    """
     current_user = get_current_user()
     data = request.get_json()
     query = data.get('query', '')
-    
+
     if not query:
         return jsonify({'error': 'Empty query'}), 400
-    
+
     try:
         _initialize_gemini()
-        model = genai.GenerativeModel('gemini-pro')
-        prompt = f"""You are an expert Indian legal researcher. A lawyer is asking for legal information.
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        prompt = f"""You are an expert Indian legal researcher with deep knowledge of IPC, CrPC, CPC, IBC, IT Act, and Constitution of India.
 
-Query: {query}
+Research Query: {query}
 
-Provide research based on Indian legal codes (IPC, CrPC, CPC, IBC, IT Act):
-1. Relevant sections with exact numbers
-2. Key provisions and requirements
-3. Penalties or consequences if applicable
-4. Recent judicial interpretations if relevant
-5. Practical implications for lawyers
+Provide comprehensive legal research with:
 
-Format your response with clear section headings."""
-        
+## 1. PRIMARY APPLICABLE SECTIONS
+List exact section numbers with Act name (e.g., "Section 420 IPC", "Section 138 NI Act")
+
+## 2. DETAILED PROVISIONS
+Explain each section's scope, requirements, and conditions
+
+## 3. PENALTIES & CONSEQUENCES
+State punishment, bail status (bailable/non-bailable), cognizable status, and compoundability
+
+## 4. LANDMARK JUDGMENTS
+Cite 2-3 important Supreme Court or High Court cases with citation format
+
+## 5. PRACTICAL GUIDANCE
+Procedural steps, documentation required, and common pitfalls
+
+## 6. RELATED SECTIONS
+Cross-reference connected provisions that may apply
+
+Use professional legal language. Cite section numbers accurately. Format with markdown headings."""
+
         response = model.generate_content(prompt)
         research_result = response.text
-        
+
+        # Extract section references for structured response
+        import re
+        sections = re.findall(r'Section\s+\d+[A-Z]*\s+[A-Z]{2,}', research_result)
+
     except Exception as e:
         return jsonify({'error': f'Research error: {str(e)}'}), 500
-    
+
     return jsonify({
         'query': query,
-        'research': research_result
+        'research': research_result,
+        'cited_sections': list(set(sections)) if sections else [],
+        'timestamp': datetime.utcnow().isoformat()
     }), 200
 
 @ai_bp.route('/draft', methods=['POST'])
@@ -181,40 +205,77 @@ def draft_document():
 @ai_bp.route('/suggest-sections', methods=['POST'])
 @login_required
 def suggest_sections():
-    """F9: Section Suggester - Map incident to IPC/CrPC/IT Act sections"""
+    """F9: Section Suggester - Map incident to IPC/CrPC/IT Act sections
+
+    Returns structured analysis with applicable legal sections.
+    """
     current_user = get_current_user()
     data = request.get_json()
     incident_description = data.get('incident', '')
-    
+
     if not incident_description:
         return jsonify({'error': 'Empty incident description'}), 400
-    
+
     try:
         _initialize_gemini()
-        model = genai.GenerativeModel('gemini-pro')
-        prompt = f"""You are an expert in Indian criminal and technology law. Analyze the following incident and map it to applicable sections.
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        prompt = f"""You are an expert Indian criminal law analyst. Analyze this incident and provide ONLY a valid JSON response.
 
-Incident Description: {incident_description}
+Incident: {incident_description}
 
-Provide:
-1. Primary sections that MUST apply (IPC/CrPC/IT Act/POCSO/NDPS)
-2. Secondary/supporting sections
-3. Bailable or Non-bailable status
-4. Cognizable or Non-cognizable status
-5. Recommended court type (Magistrate/Sessions/etc.)
-6. Suggested next legal steps
+Return ONLY this JSON structure (no markdown, no explanation):
+{{
+  "primary_sections": [
+    {{"section": "420 IPC", "description": "Cheating and dishonestly inducing delivery of property", "punishment": "Up to 7 years + fine"}},
+    {{"section": "120B IPC", "description": "Criminal conspiracy", "punishment": "As per main offense"}}
+  ],
+  "secondary_sections": [
+    {{"section": "Section number Act", "description": "Brief description"}}
+  ],
+  "offense_classification": {{
+    "bailable": false,
+    "cognizable": true,
+    "compoundable": false,
+    "triable_by": "Magistrate First Class / Sessions Court"
+  }},
+  "recommended_actions": [
+    "File FIR under mentioned sections",
+    "Collect documentary evidence",
+    "Record witness statements"
+  ],
+  "case_strength": "Strong/Moderate/Weak",
+  "additional_notes": "Any important procedural requirements or caveats"
+}}"""
 
-Format as structured JSON with clear fields."""
-        
         response = model.generate_content(prompt)
-        suggestion = response.text
-        
+        suggestion_text = response.text.strip()
+
+        # Try to parse as JSON
+        import json
+        # Remove markdown code blocks if present
+        if suggestion_text.startswith('```'):
+            suggestion_text = suggestion_text.split('```')[1]
+            if suggestion_text.startswith('json'):
+                suggestion_text = suggestion_text[4:]
+            suggestion_text = suggestion_text.strip()
+
+        try:
+            suggestion_json = json.loads(suggestion_text)
+        except json.JSONDecodeError:
+            # Fallback to text response
+            suggestion_json = {
+                'analysis': suggestion_text,
+                'primary_sections': [],
+                'note': 'AI returned unstructured response'
+            }
+
     except Exception as e:
         return jsonify({'error': f'Analysis error: {str(e)}'}), 500
-    
+
     return jsonify({
         'incident': incident_description,
-        'analysis': suggestion
+        'analysis': suggestion_json,
+        'timestamp': datetime.utcnow().isoformat()
     }), 200
 
 @ai_bp.route('/chat/<int:case_id>/history', methods=['GET'])
@@ -271,21 +332,120 @@ def _format_retrieved_sources(sources):
     return "\n\n".join(formatted)
 
 def _draft_legal_notice(case_context):
-    """Draft legal notice template"""
-    return "LEGAL NOTICE DRAFT\n\n" + case_context + "\n\n[Notice content to be generated by Gemini API]"
+    """Draft legal notice template using Gemini"""
+    _initialize_gemini()
+    model = genai.GenerativeModel('gemini-1.5-flash')
+
+    prompt = f"""You are a senior Indian advocate. Draft a formal Legal Notice based on the following case information:
+
+{case_context}
+
+Create a complete, professionally formatted Legal Notice including:
+1. Header with sender/receiver details
+2. Subject line
+3. Numbered facts and grievances
+4. Legal basis citing relevant sections
+5. Demand for action within 15 days
+6. Consequences of non-compliance
+7. Formal closing
+
+Use proper Indian legal notice formatting and professional language."""
+
+    response = model.generate_content(prompt)
+    return response.text
+
 
 def _draft_fir(case_context):
-    """Draft FIR template"""
-    return "FIR DRAFT\n\n" + case_context + "\n\n[FIR content to be generated by Gemini API]"
+    """Draft FIR template using Gemini"""
+    _initialize_gemini()
+    model = genai.GenerativeModel('gemini-1.5-flash')
+
+    prompt = f"""You are an Indian police officer. Draft a First Information Report (FIR) based on:
+
+{case_context}
+
+Create a structured FIR document with:
+1. Date, time, and police station details
+2. Complainant information
+3. Detailed narrative of the incident
+4. Applicable IPC/CrPC sections
+5. Witnesses (if any)
+6. Preliminary investigation notes
+7. Officer signature block
+
+Use official FIR format as per CrPC guidelines."""
+
+    response = model.generate_content(prompt)
+    return response.text
+
 
 def _draft_affidavit(case_context):
-    """Draft affidavit template"""
-    return "AFFIDAVIT DRAFT\n\n" + case_context + "\n\n[Affidavit content to be generated by Gemini API]"
+    """Draft affidavit template using Gemini"""
+    _initialize_gemini()
+    model = genai.GenerativeModel('gemini-1.5-flash')
+
+    prompt = f"""You are an Indian advocate preparing a court affidavit. Draft a sworn affidavit based on:
+
+{case_context}
+
+Structure:
+1. Header: "AFFIDAVIT" with court details
+2. Deponent details
+3. Numbered paragraphs with sworn statements
+4. Verification clause
+5. Oath/declaration section
+6. Signature blocks for deponent and notary
+
+Use proper affidavit format as per Indian Evidence Act."""
+
+    response = model.generate_content(prompt)
+    return response.text
+
 
 def _draft_bail_application(case_context):
-    """Draft bail application template"""
-    return "BAIL APPLICATION DRAFT\n\n" + case_context + "\n\n[Bail application content to be generated by Gemini API]"
+    """Draft bail application using Gemini"""
+    _initialize_gemini()
+    model = genai.GenerativeModel('gemini-1.5-flash')
+
+    prompt = f"""You are a criminal defense lawyer in India. Draft a Bail Application based on:
+
+{case_context}
+
+Include:
+1. Court and case number
+2. Applicant (accused) details
+3. Grounds for bail (with CrPC Section 437/439 reference)
+4. Merits: no prior criminal record, roots in community, etc.
+5. Undertakings and conditions
+6. Prayer for interim/regular bail
+7. Advocate signature
+
+Draft in formal court petition format."""
+
+    response = model.generate_content(prompt)
+    return response.text
+
 
 def _draft_contract(case_context):
-    """Draft contract template"""
-    return "CONTRACT DRAFT\n\n" + case_context + "\n\n[Contract content to be generated by Gemini API]"
+    """Draft contract template using Gemini"""
+    _initialize_gemini()
+    model = genai.GenerativeModel('gemini-1.5-flash')
+
+    prompt = f"""You are a contracts lawyer in India. Draft a legal contract based on:
+
+{case_context}
+
+Structure:
+1. Title and date
+2. Parties (with complete details)
+3. Recitals (WHEREAS clauses)
+4. Terms and conditions (numbered clauses)
+5. Payment terms
+6. Termination clauses
+7. Dispute resolution and jurisdiction
+8. Signature blocks
+
+Ensure compliance with Indian Contract Act, 1872."""
+
+    response = model.generate_content(prompt)
+    return response.text
