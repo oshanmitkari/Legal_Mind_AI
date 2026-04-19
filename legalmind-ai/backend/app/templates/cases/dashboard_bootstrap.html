@@ -118,7 +118,7 @@
                             <tr>
                                 <td>
                                     <a href="/cases/{{ case.id }}" class="text-decoration-none text-primary fw-bold">
-                                        {{ case.case_number }}
+                                        {{ case.case_number if case.case_number else 'CASE-' + case.id|string }}
                                     </a>
                                 </td>
                                 <td>{{ case.client_name }}</td>
@@ -139,18 +139,33 @@
                                     {% set deadline_status, color = case.get_deadline_status() %}
                                     {% if case.deadline_date %}
                                     <span class="badge deadline-badge-{{ color }}">
-                                        {{ case.deadline_date.strftime('%b %d') }}
+                                        {{ case.deadline_date.strftime('%b %d, %H:%M') }}
                                     </span>
                                     {% else %}
                                     <span class="text-muted">—</span>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <a href="/cases/{{ case.id }}" class="btn btn-outline-primary" title="View">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="/cases/{{ case.id }}"
+                                           class="btn btn-outline-primary"
+                                           title="View Case Details"
+                                           data-bs-toggle="tooltip"
+                                           data-bs-placement="top">
                                             <i class="bi bi-eye"></i>
                                         </a>
-                                        <button class="btn btn-outline-info" title="Calculate Risk" onclick="calculateRisk({{ case.id }})">
+                                        <a href="/cases/{{ case.id }}#chatContainer"
+                                           class="btn btn-outline-cyan"
+                                           title="Open AI Case Assistant (F6)"
+                                           data-bs-toggle="tooltip"
+                                           data-bs-placement="top">
+                                            <i class="bi bi-robot"></i>
+                                        </a>
+                                        <button class="btn btn-outline-info"
+                                                title="Calculate Risk Score (F10)"
+                                                onclick="calculateRisk({{ case.id }})"
+                                                data-bs-toggle="tooltip"
+                                                data-bs-placement="top">
                                             <i class="bi bi-calculator"></i>
                                         </button>
                                     </div>
@@ -179,15 +194,15 @@
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
-                    <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#researchModal">
+                    <a href="/ai/research" class="btn btn-outline-primary">
                         <i class="bi bi-book"></i> Legal Research
-                    </button>
-                    <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#sectionSuggesterModal">
+                    </a>
+                    <a href="/ai/suggest-sections" class="btn btn-outline-success">
                         <i class="bi bi-search"></i> Section Suggester
-                    </button>
-                    <button class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#documentDrafterModal">
+                    </a>
+                    <a href="/ai/draft" class="btn btn-outline-info">
                         <i class="bi bi-file-earmark-text"></i> Document Drafter
-                    </button>
+                    </a>
                     <button class="btn btn-outline-warning" onclick="batchCalculateRisk()">
                         <i class="bi bi-arrow-repeat"></i> Recalculate All Risks
                     </button>
@@ -291,6 +306,37 @@
     .risk-gauge-small[data-score*="9"] {
         background: #dc3545;
         color: white;
+    }
+
+    /* AI Case Assistant Button Styling */
+    .btn-outline-cyan {
+        color: #22d3ee;
+        border-color: #22d3ee;
+        background-color: transparent;
+    }
+
+    .btn-outline-cyan:hover {
+        color: #fff;
+        background-color: #22d3ee;
+        border-color: #22d3ee;
+    }
+
+    .btn-outline-cyan:focus,
+    .btn-outline-cyan:active {
+        color: #fff;
+        background-color: #06b6d4;
+        border-color: #06b6d4;
+    }
+
+    /* Tooltip styling for better visibility */
+    .tooltip-inner {
+        background-color: #1e293b;
+        color: #22d3ee;
+        border: 1px solid #22d3ee;
+    }
+
+    .tooltip.bs-tooltip-top .tooltip-arrow::before {
+        border-top-color: #22d3ee;
     }
 </style>
 {% endblock %}
@@ -400,6 +446,12 @@ async function loadUpcomingDeadlines() {
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
     loadUpcomingDeadlines();
+
+    // Initialize Bootstrap tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
 });
 </script>
 {% endblock %}

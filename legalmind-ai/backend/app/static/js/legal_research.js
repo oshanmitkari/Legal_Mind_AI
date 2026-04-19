@@ -2,21 +2,27 @@
  * F7: Legal Research Engine - Client-side Interface
  */
 
-const researchForm = document.getElementById('researchForm');
-const researchQuery = document.getElementById('researchQuery');
-const researchResults = document.getElementById('researchResults');
-const loadingOverlay = document.getElementById('loadingOverlay');
-
+let researchForm, researchQuery, researchResults, loadingOverlay;
 let lastResearchResult = null;
 
-// Handle form submission
-researchForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const query = researchQuery.value.trim();
-    if (!query) return;
-    
-    await performResearch(query);
+// Wait for DOM to load before attaching event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    researchForm = document.getElementById('researchForm');
+    researchQuery = document.getElementById('researchQuery');
+    researchResults = document.getElementById('researchResults');
+    loadingOverlay = document.getElementById('loadingOverlay');
+
+    // Handle form submission
+    if (researchForm) {
+        researchForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const query = researchQuery.value.trim();
+            if (!query) return;
+
+            await performResearch(query);
+        });
+    }
 });
 
 /**

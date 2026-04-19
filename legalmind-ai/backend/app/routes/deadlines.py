@@ -4,7 +4,12 @@ from app.utils.auth_utils import login_required, get_current_user
 from app.models import db, Deadline, Case
 from datetime import datetime, timedelta
 import calendar
+import logging
 
+# F4: Import deadline notifier for email alerts
+from app.services.deadline_notifier import get_deadline_notifier
+
+logger = logging.getLogger(__name__)
 deadlines_bp = Blueprint('deadlines', __name__)
 
 @deadlines_bp.route('/', methods=['GET'])
@@ -122,15 +127,25 @@ def create_deadline():
         deadline_type=data.get('deadline_type', 'Court Date'),
         priority=data.get('priority', 'medium')
     )
-    
+
     db.session.add(deadline)
     db.session.commit()
-    
-    return jsonify({
+
+    # F4: Check if deadline is within 2 days and send immediate notification
+    notifier = get_deadline_notifier()
+    notification_sent = notifier.check_single_deadline_on_create_or_update(deadline)
+
+    response_data = {
         'id': deadline.id,
         'message': 'Deadline created',
-        'color': deadline.status_color()
-    }), 201
+        'color': deadline.status_color(),
+        'notification_sent': notification_sent
+    }
+
+    if notification_sent:
+        logger.info(f"Email notification sent for new deadline {deadline.id}")
+
+    return jsonify(response_data), 201
 
 @deadlines_bp.route('/<int:deadline_id>', methods=['PUT'])
 @login_required
@@ -146,9 +161,14 @@ def update_deadline(deadline_id):
 
     data = request.get_json()
 
+    # Track if due_date was updated
+    due_date_changed = False
     if 'due_date' in data:
         try:
-            deadline.due_date = datetime.fromisoformat(data['due_date'])
+            new_due_date = datetime.fromisoformat(data['due_date'])
+            if deadline.due_date != new_due_date:
+                due_date_changed = True
+                deadline.due_date = new_due_date
         except:
             return jsonify({'error': 'Invalid date format'}), 400
 
@@ -171,9 +191,18 @@ def update_deadline(deadline_id):
         case.risk_score = deadline_score  # Simplified - full calc would use all components
         db.session.commit()
 
+    # F4: Check if updated deadline is now within 2 days and send notification
+    notification_sent = False
+    if due_date_changed and not deadline.is_completed:
+        notifier = get_deadline_notifier()
+        notification_sent = notifier.check_single_deadline_on_create_or_update(deadline)
+        if notification_sent:
+            logger.info(f"Email notification sent for updated deadline {deadline.id}")
+
     return jsonify({
         'message': 'Deadline updated',
-        'risk_recalculated': completion_changed
+        'risk_recalculated': completion_changed,
+        'notification_sent': notification_sent
     }), 200
 
 @deadlines_bp.route('/<int:deadline_id>', methods=['DELETE'])
@@ -192,3 +221,4 @@ def delete_deadline(deadline_id):
     db.session.commit()
     
     return jsonify({'message': 'Deadline deleted'}), 200
+

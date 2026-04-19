@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Section Suggester - LegalMind AI{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card bg-gradient border-0" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+            <div class="card-body py-4">
+                <h2 class="text-white fw-bold mb-2">
+                    <i class="bi bi-search"></i> Section Suggester
+                </h2>
+                <p class="text-white-50 mb-0">
+                    F9: Describe an incident and get applicable IPC, CrPC, and IT Act sections
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="row g-4">
+    <!-- Left Column: Input -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-dark">
+                <h5 class="mb-0"><i class="bi bi-pencil-square"></i> Describe the Incident</h5>
+            </div>
+            <div class="card-body">
+                <form id="suggesterForm">
+                    <div class="mb-3">
+                        <label class="form-label">Incident Description</label>
+                        <textarea class="form-control" 
+                                  id="incidentDescription" 
+                                  rows="6" 
+                                  placeholder="Describe the incident in plain language... 
+
+Example: Someone hacked into my email account and sent fraudulent messages to my contacts asking for money. They also posted my personal photos on social media without permission."
+                                  required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-search"></i> Suggest Sections
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div id="results" class="mt-4" style="display: none;">
+            <!-- Primary Sections -->
+            <div class="card mb-3">
+                <div class="card-header bg-dark">
+                    <h5 class="mb-0"><i class="bi bi-bookmark-star"></i> Primary Applicable Sections</h5>
+                </div>
+                <div class="card-body" id="primarySections">
+                </div>
+            </div>
+
+            <!-- Classification -->
+            <div class="card mb-3">
+                <div class="card-header bg-dark">
+                    <h5 class="mb-0"><i class="bi bi-tag"></i> Offense Classification</h5>
+                </div>
+                <div class="card-body" id="classification">
+                </div>
+            </div>
+
+            <!-- Recommended Actions -->
+            <div class="card">
+                <div class="card-header bg-dark">
+                    <h5 class="mb-0"><i class="bi bi-list-check"></i> Recommended Actions</h5>
+                </div>
+                <div class="card-body" id="actions">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Examples -->
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header bg-dark">
+                <h5 class="mb-0"><i class="bi bi-lightbulb"></i> Example Incidents</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-secondary btn-sm text-start" onclick="fillExample('Someone stole my laptop from my office desk')">
+                        Theft of laptop
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm text-start" onclick="fillExample('A person is sending me threatening messages on WhatsApp and demanding money')">
+                        Extortion via WhatsApp
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm text-start" onclick="fillExample('Someone created a fake Facebook profile using my photos and is harassing my friends')">
+                        Identity theft online
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm text-start" onclick="fillExample('My business partner forged my signature on documents and withdrew money from company account')">
+                        Forgery and fraud
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm text-start" onclick="fillExample('Someone hacked my bank account and transferred all my money')">
+                        Banking fraud
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-dark">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> How It Works</h5>
+            </div>
+            <div class="card-body">
+                <ol class="small">
+                    <li class="mb-2">Describe the incident in plain language</li>
+                    <li class="mb-2">AI analyzes and maps to relevant sections</li>
+                    <li class="mb-2">Get IPC, CrPC, and IT Act sections</li>
+                    <li class="mb-2">See bailable/cognizable status</li>
+                    <li class="mb-2">Get recommended legal actions</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 9999;">
+    <div class="d-flex justify-content-center align-items-center h-100">
+        <div class="text-center text-white">
+            <div class="spinner-border mb-3" style="width: 3rem; height: 3rem;" role="status"></div>
+            <h5>Analyzing incident...</h5>
+            <p class="text-muted">AI is mapping to relevant sections</p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/section_suggester.js"></script>
+{% endblock %}

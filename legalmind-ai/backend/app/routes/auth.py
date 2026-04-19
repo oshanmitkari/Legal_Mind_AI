@@ -2,7 +2,10 @@
 from flask import Blueprint, request, jsonify, render_template, redirect, url_for
 from app.services.auth_service import register_user, authenticate_user, verify_enrollment_preview
 from app.utils.auth_utils import login_required, get_current_user, login_user, logout_user
+from app.models import db
+import logging
 
+logger = logging.getLogger(__name__)
 auth_bp = Blueprint('auth', __name__)
 
 
@@ -105,6 +108,51 @@ def profile():
         'name': current_user.name,
         'enrollment_number': current_user.enrollment_number,
         'state': current_user.state,
+        'email': current_user.email,  # F4: Include email
         'is_verified': current_user.is_verified,
         'is_admin': current_user.is_admin,
     }), 200
+
+
+@auth_bp.route('/api/profile/update', methods=['POST'])
+@login_required
+def update_profile():
+    """
+    F4: Update user profile (including email for deadline notifications)
+    """
+    user = get_current_user()
+    data = request.get_json()
+
+    updated_fields = []
+
+    # Update email if provided
+    if 'email' in data:
+        email = data['email'].strip() if data['email'] else None
+        if email != user.email:
+            # Basic email validation
+            if email and '@' not in email:
+                return jsonify({'error': 'Invalid email format'}), 400
+
+            user.email = email
+            updated_fields.append('email')
+            logger.info(f"User {user.id} updated email to: {email}")
+
+    # Update name if provided
+    if 'name' in data:
+        name = data['name'].strip()
+        if name and name != user.name:
+            user.name = name
+            updated_fields.append('name')
+
+    if updated_fields:
+        db.session.commit()
+        return jsonify({
+            'success': True,
+            'message': f'Profile updated: {", ".join(updated_fields)}',
+            'updated_fields': updated_fields
+        }), 200
+    else:
+        return jsonify({
+            'success': True,
+            'message': 'No changes made'
+        }), 200

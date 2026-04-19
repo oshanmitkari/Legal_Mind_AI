@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Document Drafter - LegalMind AI{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card bg-gradient border-0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="card-body py-4">
+                <h2 class="text-white fw-bold mb-2">
+                    <i class="bi bi-file-earmark-text"></i> Document Drafter
+                </h2>
+                <p class="text-white-50 mb-0">
+                    F8: AI-powered legal document generation with auto-filled case data
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="row g-4">
+    <!-- Left Column: Template Selection -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-dark">
+                <h5 class="mb-0"><i class="bi bi-file-plus"></i> Draft New Document</h5>
+            </div>
+            <div class="card-body">
+                <form id="draftForm">
+                    <div class="mb-3">
+                        <label class="form-label">Select Case</label>
+                        <select class="form-select" id="caseId" required>
+                            <option value="">Choose a case...</option>
+                            {% for case in cases %}
+                            <option value="{{ case.id }}">{{ case.case_number }} - {{ case.client_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Document Template</label>
+                        <select class="form-select" id="templateType" required>
+                            <option value="">Choose template...</option>
+                            <option value="legal_notice">Legal Notice (15-day demand)</option>
+                            <option value="fir_draft">FIR Draft</option>
+                            <option value="affidavit">Affidavit</option>
+                            <option value="bail_application">Bail Application</option>
+                            <option value="contract">Contract</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-magic"></i> Generate Document
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Generated Document -->
+        <div id="generatedDocument" class="card mt-4" style="display: none;">
+            <div class="card-header bg-dark d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-file-earmark-check"></i> Generated Document</h5>
+                <button class="btn btn-sm btn-outline-light" onclick="exportDocument()">
+                    <i class="bi bi-download"></i> Export
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="documentContent" class="border p-4 bg-white text-dark" style="font-family: 'Times New Roman', serif; min-height: 400px;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Templates Info -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-dark">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> Available Templates</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item bg-dark border-secondary">
+                        <strong>Legal Notice</strong>
+                        <p class="small mb-0">15-day demand notice under relevant laws</p>
+                    </div>
+                    <div class="list-group-item bg-dark border-secondary">
+                        <strong>FIR Draft</strong>
+                        <p class="small mb-0">First Information Report format</p>
+                    </div>
+                    <div class="list-group-item bg-dark border-secondary">
+                        <strong>Affidavit</strong>
+                        <p class="small mb-0">Sworn statement for court</p>
+                    </div>
+                    <div class="list-group-item bg-dark border-secondary">
+                        <strong>Bail Application</strong>
+                        <p class="small mb-0">CrPC 437/439 bail petition</p>
+                    </div>
+                    <div class="list-group-item bg-dark border-secondary">
+                        <strong>Contract</strong>
+                        <p class="small mb-0">Agreement under Indian Contract Act</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 9999;">
+    <div class="d-flex justify-content-center align-items-center h-100">
+        <div class="text-center text-white">
+            <div class="spinner-border mb-3" style="width: 3rem; height: 3rem;" role="status"></div>
+            <h5>Generating document with AI...</h5>
+            <p class="text-muted">This may take a few seconds</p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/document_drafter.js"></script>
+{% endblock %}

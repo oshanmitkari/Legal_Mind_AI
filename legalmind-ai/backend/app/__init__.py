@@ -31,6 +31,7 @@ def create_app(config_name='development'):
 
     from app.routes.ai_assistant import ai_bp
     from app.routes.deadlines import deadlines_bp
+    from app.routes.deadline_admin import deadline_admin_bp
     from app.routes.risk import risk_bp
 
     app.register_blueprint(auth_bp)
@@ -40,6 +41,7 @@ def create_app(config_name='development'):
         app.add_url_rule('/upload', endpoint='root_upload', view_func=upload_document, methods=['POST'])
     app.register_blueprint(ai_bp, url_prefix='/ai')
     app.register_blueprint(deadlines_bp, url_prefix='/deadlines')
+    app.register_blueprint(deadline_admin_bp)  # F4: Admin routes for deadline notifications
     app.register_blueprint(risk_bp, url_prefix='/risk')
 
     # Create tables

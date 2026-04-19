@@ -19,32 +19,64 @@ def research_page():
     return render_template('research/index.html', current_user=current_user)
 
 
+@ai_bp.route('/draft', methods=['GET'])
+@login_required
+def draft_page():
+    """F8: Render document drafter UI page"""
+    from app.models import Case
+    current_user = get_current_user()
+    # Get user's cases for dropdown
+    if current_user.is_admin:
+        cases = Case.query.all()
+    else:
+        cases = Case.query.filter_by(user_id=current_user.id).all()
+    return render_template('drafter/index.html', current_user=current_user, cases=cases)
+
+
+@ai_bp.route('/suggest-sections', methods=['GET'])
+@login_required
+def suggest_sections_page():
+    """F9: Render section suggester UI page"""
+    current_user = get_current_user()
+    return render_template('suggester/index.html', current_user=current_user)
+
+
 # Initialize Gemini
 def _initialize_gemini():
-    api_key = current_app.config.get('GEMINI_API_KEY') or os.getenv('GEMINI_API_KEY')
+    # Try system environment first (most secure), then .env file
+    api_key = os.environ.get('GEMINI_API_KEY') or os.getenv('GEMINI_API_KEY') or current_app.config.get('GEMINI_API_KEY')
     if api_key:
         genai.configure(api_key=api_key)
+    else:
+        raise RuntimeError("GEMINI_API_KEY not found. Set it as system environment variable.")
     return genai
 
 @ai_bp.route('/chat/<int:case_id>', methods=['POST'])
 @login_required
 def ai_chat(case_id):
-    """F6: AI Case Assistant - Context-aware chat"""
+    """F6: AI Case Assistant - Context-aware chat with conversation history"""
     current_user = get_current_user()
     case = Case.query.get_or_404(case_id)
-    
+
     # Authorization
     if not current_user.is_admin and case.user_id != current_user.id:
         return jsonify({'error': 'Unauthorized'}), 403
-    
+
     data = request.get_json()
     user_message = data.get('message', '')
-    
+
     if not user_message:
         return jsonify({'error': 'Empty message'}), 400
-    
-    # Get case context
-    case_context = _get_case_context(case)
+
+    # Step 1: Aggregate ALL case data
+    case_context = _get_comprehensive_case_context(case, current_user)
+
+    # Step 2: Retrieve conversation history for context
+    conversation_history = ChatMessage.query.filter_by(
+        case_id=case_id
+    ).order_by(ChatMessage.created_at.asc()).limit(20).all()  # Last 20 messages
+
+    # Step 3: Retrieve relevant document snippets using FAISS
     retrieved_sources = []
     try:
         retrieved_sources = retrieve_case_document_snippets(
@@ -57,51 +89,74 @@ def ai_chat(case_id):
         retrieved_sources = []
 
     evidence_context = _format_retrieved_sources(retrieved_sources)
-    
-    # Call Gemini
-    try:
-        _initialize_gemini()
-        model = genai.GenerativeModel('gemini-pro')
-        prompt = f"""You are a legal assistant. A lawyer is asking you about their case.
 
-Case Context:
+    # Step 4: Construct comprehensive system prompt
+    system_prompt = f"""You are a specialized legal AI assistant for Case {case.case_number}. You have deep knowledge of this specific case and must provide context-aware, actionable legal advice.
+
+IMPORTANT: Your responses MUST be grounded in the actual facts of this case, not generic legal information. Reference specific details from the case context, uploaded documents, and conversation history.
+
 {case_context}
 
-Retrieved Document Evidence:
-{evidence_context}
+RETRIEVED DOCUMENT EVIDENCE (from case files):
+{evidence_context if evidence_context else "No specific document evidence retrieved for this query."}
 
-Lawyer's Question: {user_message}
+INSTRUCTIONS:
+1. Always reference specific case details (client name, case type, deadlines, documents)
+2. If document evidence is available, cite it explicitly
+3. Provide actionable next steps specific to this case
+4. Flag any critical deadlines or risks
+5. Use Indian legal framework when applicable (IPC, CrPC, CPC, etc.)
+"""
 
-Provide a detailed, case-specific legal response based on the case context provided. Use the retrieved document evidence when available, and clearly ground your answer in the actual case details, uploaded documents, and Indian law where applicable."""
-        
-        response = model.generate_content(prompt)
+    # Step 5: Build conversation history for Gemini
+    conversation_context = []
+    for msg in conversation_history:
+        conversation_context.append({
+            'role': 'user' if msg.message_type == 'user' else 'model',
+            'parts': [msg.content]
+        })
+
+    # Step 6: Call Gemini with full context
+    try:
+        _initialize_gemini()
+        model = genai.GenerativeModel(
+            'gemini-flash-latest',
+            system_instruction=system_prompt
+        )
+
+        # Start chat with history
+        chat = model.start_chat(history=conversation_context)
+
+        # Send new message
+        response = chat.send_message(user_message)
         assistant_message = response.text
-        
+
     except Exception as e:
         return jsonify({'error': f'AI error: {str(e)}'}), 500
-    
-    # Save messages to history
+
+    # Step 7: Save conversation to database
     user_msg = ChatMessage(
         case_id=case_id,
         user_id=current_user.id,
         message_type='user',
         content=user_message
     )
-    
+
     assistant_msg = ChatMessage(
         case_id=case_id,
         user_id=current_user.id,
         message_type='assistant',
         content=assistant_message
     )
-    
+
     db.session.add(user_msg)
     db.session.add(assistant_msg)
     db.session.commit()
-    
+
     return jsonify({
         'response': assistant_message,
         'message_id': assistant_msg.id,
+        'history_count': len(conversation_history),
         'sources': [{
             'document_id': source.document_id,
             'filename': source.filename,
@@ -174,7 +229,7 @@ def legal_research():
 
         # Build enhanced prompt with RAG context
         _initialize_gemini()
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-flash-latest')
 
         prompt = f"""You are an expert Indian legal researcher analyzing a query using the provided legal statutes.
 
@@ -280,7 +335,7 @@ def suggest_sections():
 
     try:
         _initialize_gemini()
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-flash-latest')
         prompt = f"""You are an expert Indian criminal law analyst. Analyze this incident and provide ONLY a valid JSON response.
 
 Incident: {incident_description}
@@ -362,7 +417,7 @@ def chat_history(case_id):
 
 # Helper functions
 def _get_case_context(case):
-    """Build full case context for AI - F6: Enhanced with deadlines"""
+    """Build full case context for AI - F6: Enhanced with deadlines (Legacy function)"""
     from app.models import Deadline
 
     # Get documents
@@ -394,6 +449,132 @@ Documents Uploaded:
     return context
 
 
+def _get_comprehensive_case_context(case, current_user):
+    """F6: Build COMPREHENSIVE case context with ALL aggregated data
+
+    Aggregates:
+    - Case description and metadata
+    - Client details
+    - All uploaded documents with extracted text
+    - All deadlines and important dates
+    - Case notes (if any)
+    - Lawyer information
+    - Risk assessment data
+    """
+    from app.models import Deadline, RiskScore
+    from datetime import datetime
+
+    # === CASE METADATA ===
+    case_metadata = f"""
+═══════════════════════════════════════════════════════════════
+CASE INFORMATION
+═══════════════════════════════════════════════════════════════
+Case Number: {case.case_number}
+Case Type: {case.case_type}
+Status: {case.status.upper()}
+Created: {case.created_at.strftime('%Y-%m-%d')}
+Last Updated: {case.updated_at.strftime('%Y-%m-%d %H:%M')}
+"""
+
+    # === CLIENT DETAILS ===
+    client_info = f"""
+CLIENT INFORMATION
+═══════════════════════════════════════════════════════════════
+Client Name: {case.client_name}
+"""
+
+    # === LAWYER DETAILS ===
+    lawyer_info = f"""
+LAWYER ASSIGNED
+═══════════════════════════════════════════════════════════════
+Advocate: {current_user.name}
+Enrollment No: {current_user.enrollment_number}
+State: {current_user.state}
+Verified: {'✓ Yes' if current_user.is_verified else '✗ No'}
+"""
+
+    # === CASE DESCRIPTION ===
+    description_section = f"""
+CASE DESCRIPTION
+═══════════════════════════════════════════════════════════════
+{case.description if case.description else "No description provided."}
+"""
+
+    # === RISK ASSESSMENT ===
+    risk_data = RiskScore.query.filter_by(case_id=case.id).first()
+    risk_section = f"""
+RISK ASSESSMENT
+═══════════════════════════════════════════════════════════════
+Overall Risk Score: {case.risk_score}/100
+"""
+    if risk_data:
+        risk_section += f"""Deadline Risk: {risk_data.deadline_score}/100
+Document Completeness: {risk_data.document_completeness}/100
+Document Strength: {risk_data.document_strength}/100
+Last Assessed: {risk_data.last_updated.strftime('%Y-%m-%d %H:%M')}
+"""
+
+    # === DEADLINES ===
+    deadlines = Deadline.query.filter_by(case_id=case.id).order_by(Deadline.due_date.asc()).all()
+    deadline_section = f"""
+DEADLINES & IMPORTANT DATES
+═══════════════════════════════════════════════════════════════
+Total Deadlines: {len(deadlines)}
+"""
+    if deadlines:
+        now = datetime.utcnow()
+        for dl in deadlines[:10]:  # Show top 10
+            status = "✓ COMPLETED" if dl.is_completed else "⏰ PENDING"
+            days_until = (dl.due_date - now).days
+            urgency = ""
+            if not dl.is_completed:
+                if days_until < 0:
+                    urgency = "🔴 OVERDUE"
+                elif days_until <= 3:
+                    urgency = "🟡 URGENT (Due soon!)"
+                else:
+                    urgency = "🟢 Safe"
+
+            deadline_section += f"""
+  [{status}] {dl.title}
+  Type: {dl.deadline_type}
+  Due: {dl.due_date.strftime('%Y-%m-%d %H:%M')} {urgency}
+  Priority: {dl.priority.upper()}
+"""
+    else:
+        deadline_section += "\nNo deadlines set for this case.\n"
+
+    # === UPLOADED DOCUMENTS ===
+    documents = Document.query.filter_by(case_id=case.id).all()
+    doc_section = f"""
+UPLOADED DOCUMENTS
+═══════════════════════════════════════════════════════════════
+Total Documents: {len(documents)}
+"""
+    if documents:
+        for doc in documents:
+            text_preview = doc.text_content[:300] + "..." if doc.text_content and len(doc.text_content) > 300 else (doc.text_content or "No text extracted")
+            doc_section += f"""
+  📄 {doc.filename}
+  Type: {doc.document_type or 'Unknown'}
+  Uploaded: {doc.uploaded_at.strftime('%Y-%m-%d')}
+  Extracted Text Preview:
+  {text_preview}
+  ---
+"""
+    else:
+        doc_section += "\nNo documents uploaded yet.\n"
+
+    # === COMBINE ALL CONTEXT ===
+    full_context = f"""{case_metadata}{client_info}{lawyer_info}{description_section}{risk_section}{deadline_section}{doc_section}
+═══════════════════════════════════════════════════════════════
+END OF CASE CONTEXT
+═══════════════════════════════════════════════════════════════
+"""
+
+    return full_context
+
+
 def _format_retrieved_sources(sources):
     """Format retrieved document snippets for inclusion in the prompt."""
     if not sources:
@@ -410,7 +591,7 @@ def _format_retrieved_sources(sources):
 def _draft_legal_notice(case_context):
     """Draft legal notice template using Gemini"""
     _initialize_gemini()
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-flash-latest')
 
     prompt = f"""You are a senior Indian advocate. Draft a formal Legal Notice based on the following case information:
 
@@ -434,7 +615,7 @@ Use proper Indian legal notice formatting and professional language."""
 def _draft_fir(case_context):
     """Draft FIR template using Gemini"""
     _initialize_gemini()
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-flash-latest')
 
     prompt = f"""You are an Indian police officer. Draft a First Information Report (FIR) based on:
 
@@ -458,7 +639,7 @@ Use official FIR format as per CrPC guidelines."""
 def _draft_affidavit(case_context):
     """Draft affidavit template using Gemini"""
     _initialize_gemini()
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-flash-latest')
 
     prompt = f"""You are an Indian advocate preparing a court affidavit. Draft a sworn affidavit based on:
 
@@ -481,7 +662,7 @@ Use proper affidavit format as per Indian Evidence Act."""
 def _draft_bail_application(case_context):
     """Draft bail application using Gemini"""
     _initialize_gemini()
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-flash-latest')
 
     prompt = f"""You are a criminal defense lawyer in India. Draft a Bail Application based on:
 
@@ -505,7 +686,7 @@ Draft in formal court petition format."""
 def _draft_contract(case_context):
     """Draft contract template using Gemini"""
     _initialize_gemini()
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-flash-latest')
 
     prompt = f"""You are a contracts lawyer in India. Draft a legal contract based on:
 
@@ -525,3 +706,123 @@ Ensure compliance with Indian Contract Act, 1872."""
 
     response = model.generate_content(prompt)
     return response.text
+
+
+# ============================================================================
+# F11: LEGAL PRECEDENT & CASE SIMILARITY ENGINE
+# ============================================================================
+
+@ai_bp.route('/compare-precedents/<int:case_id>', methods=['GET'])
+@login_required
+def compare_precedents(case_id):
+    """F11: Find similar historical precedents and generate AI comparison analysis
+
+    Returns:
+        JSON with similar cases and AI-generated comparison report
+    """
+    from app.services.precedent_service import find_similar_precedents
+    from app.models import HistoricalCase
+
+    current_user = get_current_user()
+    case = Case.query.get_or_404(case_id)
+
+    # Authorization check (RLS)
+    if not current_user.is_admin and case.user_id != current_user.id:
+        return jsonify({'error': 'Unauthorized access'}), 403
+
+    try:
+        # Step 1: Find top 3 similar precedents using FAISS
+        similar_cases = find_similar_precedents(case_id, top_k=3)
+
+        if not similar_cases:
+            return jsonify({
+                'error': 'No similar precedents found',
+                'similar_cases': [],
+                'comparison_report': 'No historical precedents available for comparison.'
+            }), 200
+
+        # Step 2: Build comprehensive context for AI analysis
+        current_case_context = f"""
+CURRENT CASE DETAILS:
+Case Number: {case.case_number if case.case_number else 'CASE-' + str(case.id)}
+Case Type: {case.case_type}
+Client: {case.client_name}
+Description: {case.description}
+Status: {case.status}
+Risk Score: {case.risk_score}/100
+"""
+
+        # Format similar cases for AI
+        precedents_context = ""
+        precedent_summaries = []
+
+        for idx, (hist_case, similarity_score) in enumerate(similar_cases, 1):
+            precedents_context += f"""
+PRECEDENT {idx} (Similarity: {similarity_score:.1f}%):
+Case Number: {hist_case.case_number}
+Title: {hist_case.title}
+Case Type: {hist_case.case_type}
+Description: {hist_case.description}
+Outcome: {hist_case.outcome}
+Key Sections: {hist_case.key_sections}
+Court: {hist_case.court}
+Judgment Date: {hist_case.judgment_date.strftime('%Y-%m-%d')}
+---
+"""
+            # Store for response
+            precedent_summaries.append(hist_case.to_dict())
+
+        # Step 3: Generate AI comparison analysis using Gemini
+        _initialize_gemini()
+        model = genai.GenerativeModel('gemini-flash-latest')
+
+        comparison_prompt = f"""You are an expert legal analyst specializing in Indian law. Analyze the current case against the provided historical precedents.
+
+{current_case_context}
+
+HISTORICAL PRECEDENTS FOUND (Ranked by Similarity):
+{precedents_context}
+
+TASK:
+Provide a comprehensive comparison analysis addressing:
+
+1. **Similarity Analysis**: Explain WHY these precedents were matched (common facts, legal issues, case types)
+
+2. **Legal Overlaps**: Identify which legal provisions, statutes, or sections are common across these cases
+
+3. **Outcome Patterns**: Analyze how the historical cases were decided and what factors influenced those outcomes
+
+4. **Strategic Implications**: Based on these precedents, what legal strategy should be adopted for the current case?
+
+5. **Distinguishing Factors**: Highlight any key differences that might affect applicability
+
+6. **Recommended Actions**: Specific next steps based on how similar cases were handled
+
+Format your analysis clearly with headings and bullet points. Be specific and cite the precedent case numbers when making references.
+"""
+
+        response = model.generate_content(comparison_prompt)
+        comparison_report = response.text
+
+        # Step 4: Return results
+        return jsonify({
+            'success': True,
+            'current_case': {
+                'id': case.id,
+                'case_number': case.case_number if case.case_number else f'CASE-{case.id}',
+                'case_type': case.case_type,
+                'client_name': case.client_name,
+                'description': case.description,
+                'status': case.status,
+                'risk_score': case.risk_score
+            },
+            'similar_cases': precedent_summaries,
+            'comparison_report': comparison_report,
+            'precedent_count': len(similar_cases)
+        }), 200
+
+    except Exception as e:
+        current_app.logger.error(f"Error in precedent comparison: {str(e)}")
+        return jsonify({
+            'error': f'Failed to generate precedent comparison: {str(e)}'
+        }), 500

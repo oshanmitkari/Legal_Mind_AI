@@ -7,6 +7,7 @@ PyMuPDF
 langchain
 google-generativeai
 faiss-cpu
+sentence-transformers
 Werkzeug==2.3.6
 python-dateutil==2.8.2
 requests==2.31.0
